@@ -125,7 +125,7 @@ import {
               Login
             </Typography>
             <Typography variant="body1" color="#000000CC" mt={2}>
-              Don' t have an account?{" "}
+              Don't have an account?{" "}
               <span
                 style={{ color: "#2752E7",fontWeight:600, cursor: "pointer" }}
                 onClick={() => router.push("/auth/sign-up")}

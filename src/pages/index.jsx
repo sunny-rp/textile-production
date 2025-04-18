@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Box } from "@mui/material";
 import LoginLayout from "@/layout/LoginLayout/LoginLayout";
 import CustomHead from "@/components/CustomHead";
-import Login from "../pages/auth/login/Login";
+import Login from "./auth/login";
 
 
 export default function LoginPage() {

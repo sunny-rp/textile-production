@@ -1,7 +1,7 @@
-import { api_configs } from "@/api-services";
+// import { api_configs } from "@/api-services";
 import axios from "axios";
-import * as XLSX from "xlsx";
-import CryptoJS from "crypto-js";
+// import * as XLSX from "xlsx";
+// import CryptoJS from "crypto-js";
 
 export const maxCapitalsLimit = 10000000000000;
 export const bscRedirectUrl = "https://bscscan.com/";
