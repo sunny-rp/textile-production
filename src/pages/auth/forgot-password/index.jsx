@@ -106,7 +106,7 @@ export default function ForgotPassword() {
       .required("Email is required."),
   });
 
-  const handleFormSubmit = async (values) => {
+  const handleFormSubmit = async (values) => {   
     try {
       setisLoading(true);
       const formData = {
