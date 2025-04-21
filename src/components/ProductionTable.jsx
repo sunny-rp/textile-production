@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Table,
   TableBody,
@@ -25,6 +25,11 @@ import {
   Tooltip,
   Divider,
   Grid,
+  Box,
+  InputAdornment,
+  Menu,
+  Checkbox,
+  ListItemText,
 } from "@mui/material"
 import {
   Edit as EditIcon,
@@ -32,19 +37,27 @@ import {
   Visibility as ViewIcon,
   FilterList as FilterIcon,
   Search as SearchIcon,
-  Download as DownloadIcon,
   Close as CloseIcon,
+  Clear as ClearIcon,
 } from "@mui/icons-material"
 import { useFormik } from "formik"
 import * as yup from "yup"
 import styled from "@emotion/styled"
-// import "./productionTable.scss"
 
+// Enhanced table container styling for better full-width display
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
+  width: "100%",
+  maxWidth: "100%",
+  overflowX: "auto",
   maxHeight: "600px",
   "& .MuiTableCell-head": {
     backgroundColor: "#f5f5f5",
     fontWeight: "bold",
+    whiteSpace: "nowrap",
+  },
+  "& .MuiTable-root": {
+    width: "100%",
+    minWidth: "800px", // Ensures table doesn't get too compressed
   },
 }))
 
@@ -72,10 +85,47 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
   const [openViewDialog, setOpenViewDialog] = useState(false)
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filteredData, setFilteredData] = useState(data)
+  const [filterAnchorEl, setFilterAnchorEl] = useState(null)
+  const [selectedFilters, setSelectedFilters] = useState({
+    productType: [],
+    quality: [],
+  })
 
   const productTypes = ["Cotton Fabric", "Polyester Blend", "Silk", "Wool", "Linen", "Denim", "Nylon", "Rayon"]
   const qualityLevels = ["Premium", "Standard", "Economy"]
   const units = ["meters", "yards", "pieces", "kg"]
+
+  // Update filtered data when data, search term, or filters change
+  useEffect(() => {
+    let result = [...data]
+
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase()
+      result = result.filter(
+        (item) =>
+          item.productType.toLowerCase().includes(searchLower) ||
+          item.machineId.toLowerCase().includes(searchLower) ||
+          item.supervisor.toLowerCase().includes(searchLower) ||
+          item.date.includes(searchTerm) ||
+          item.quantity.toString().includes(searchTerm),
+      )
+    }
+
+    // Apply product type filter
+    if (selectedFilters.productType.length > 0) {
+      result = result.filter((item) => selectedFilters.productType.includes(item.productType))
+    }
+
+    // Apply quality filter
+    if (selectedFilters.quality.length > 0) {
+      result = result.filter((item) => selectedFilters.quality.includes(item.quality))
+    }
+
+    setFilteredData(result)
+  }, [data, searchTerm, selectedFilters])
 
   const formik = useFormik({
     initialValues: {
@@ -136,6 +186,47 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
     handleCloseDeleteDialog()
   }
 
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value)
+  }
+
+  const handleClearSearch = () => {
+    setSearchTerm("")
+  }
+
+  const handleFilterClick = (event) => {
+    setFilterAnchorEl(event.currentTarget)
+  }
+
+  const handleFilterClose = () => {
+    setFilterAnchorEl(null)
+  }
+
+  const handleFilterChange = (filterType, value) => {
+    setSelectedFilters((prev) => {
+      const currentValues = [...prev[filterType]]
+      const valueIndex = currentValues.indexOf(value)
+
+      if (valueIndex === -1) {
+        currentValues.push(value)
+      } else {
+        currentValues.splice(valueIndex, 1)
+      }
+
+      return {
+        ...prev,
+        [filterType]: currentValues,
+      }
+    })
+  }
+
+  const handleClearFilters = () => {
+    setSelectedFilters({
+      productType: [],
+      quality: [],
+    })
+  }
+
   const getQualityChipColor = (quality) => {
     switch (quality) {
       case "Premium":
@@ -149,23 +240,148 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
     }
   }
 
+  const isFiltersApplied = selectedFilters.productType.length > 0 || selectedFilters.quality.length > 0
+
   return (
-    <div className="production-table-container">
+    // Modified container to ensure full width
+    <Box sx={{ width: "100%", maxWidth: "100%" }} className="production-table-container">
       <div className="table-toolbar">
-        <div className="search-filter">
-          <div className="search-box">
-            <SearchIcon className="search-icon" />
-            <input type="text" placeholder="Search records..." className="search-input" />
-          </div>
-          <Button startIcon={<FilterIcon />} variant="outlined" size="small" className="filter-button">
-            Filter
-          </Button>
-        </div>
-        <Button startIcon={<DownloadIcon />} variant="outlined" size="small" className="export-button">
-          Export
+        {/* Improved search field */}
+        <TextField
+          placeholder="Search by product, machine ID, supervisor..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          variant="outlined"
+          size="small"
+          fullWidth
+          sx={{
+            '& .MuiInputBase-input': {
+              color: '#000', // user input text
+              '&::placeholder': {
+                color: '#888', // placeholder text
+                opacity: 1,    // override MUI default opacity
+              },
+            },
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: '#888' }} />
+              </InputAdornment>
+            ),
+            endAdornment: searchTerm && (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={handleClearSearch}>
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+
+
+        {/* Filter button moved to right */}
+        <Button
+          startIcon={<FilterIcon />}
+          variant="outlined"
+          size="small"
+          className={`filter-button ${isFiltersApplied ? "filter-active" : ""}`}
+          onClick={handleFilterClick}
+        >
+          Filter {isFiltersApplied && `(${selectedFilters.productType.length + selectedFilters.quality.length})`}
         </Button>
+
+        {/* Filter menu */}
+        <Menu
+          anchorEl={filterAnchorEl}
+          open={Boolean(filterAnchorEl)}
+          onClose={handleFilterClose}
+          className="filter-menu"
+        >
+          <div className="filter-menu-header">
+            <Typography variant="subtitle2">Filter Records</Typography>
+            {isFiltersApplied && (
+              <Button size="small" onClick={handleClearFilters} className="clear-filters-btn">
+                Clear All
+              </Button>
+            )}
+          </div>
+          <Divider />
+
+          <div className="filter-section">
+            <Typography variant="body2" className="filter-section-title">
+              Product Type
+            </Typography>
+            {productTypes.map((type) => (
+              <div key={type} className="filter-option">
+                <Checkbox
+                  checked={selectedFilters.productType.includes(type)}
+                  onChange={() => handleFilterChange("productType", type)}
+                  size="small"
+                />
+                <ListItemText primary={type} />
+              </div>
+            ))}
+          </div>
+
+          <Divider />
+
+          <div className="filter-section">
+            <Typography variant="body2" className="filter-section-title">
+              Quality
+            </Typography>
+            {qualityLevels.map((quality) => (
+              <div key={quality} className="filter-option">
+                <Checkbox
+                  checked={selectedFilters.quality.includes(quality)}
+                  onChange={() => handleFilterChange("quality", quality)}
+                  size="small"
+                />
+                <ListItemText primary={quality} />
+              </div>
+            ))}
+          </div>
+
+          <Divider />
+
+          <div className="filter-menu-footer">
+            <Button variant="contained" color="primary" onClick={handleFilterClose} fullWidth>
+              Apply Filters
+            </Button>
+          </div>
+        </Menu>
       </div>
 
+      {/* Display active filters */}
+      {isFiltersApplied && (
+        <div className="active-filters">
+          <Typography variant="body2" className="active-filters-title">
+            Active Filters:
+          </Typography>
+          <div className="filter-chips">
+            {selectedFilters.productType.map((type) => (
+              <Chip
+                key={`type-${type}`}
+                label={`Type: ${type}`}
+                size="small"
+                onDelete={() => handleFilterChange("productType", type)}
+                className="filter-chip"
+              />
+            ))}
+            {selectedFilters.quality.map((quality) => (
+              <Chip
+                key={`quality-${quality}`}
+                label={`Quality: ${quality}`}
+                size="small"
+                onDelete={() => handleFilterChange("quality", quality)}
+                className="filter-chip"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modified table container to ensure full width */}
       <StyledTableContainer component={Paper} className="table-wrapper">
         <Table stickyHeader aria-label="production data table">
           <TableHead>
@@ -180,8 +396,8 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.length > 0 ? (
-              data.map((row) => (
+            {filteredData.length > 0 ? (
+              filteredData.map((row) => (
                 <StyledTableRow key={row.id} className="table-row">
                   <TableCell>{row.date}</TableCell>
                   <TableCell>{row.productType}</TableCell>
@@ -233,7 +449,9 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} align="center" className="no-data">
-                  No production data available
+                  {searchTerm || isFiltersApplied
+                    ? "No matching records found. Try adjusting your search or filters."
+                    : "No production data available"}
                 </TableCell>
               </TableRow>
             )}
@@ -244,12 +462,13 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
       {/* Edit Dialog */}
       <Dialog open={openEditDialog} onClose={handleCloseEditDialog} maxWidth="md" fullWidth className="edit-dialog">
         <DialogTitle className="dialog-title">
-          <Typography variant="h6">Edit Production Record</Typography>
-          <IconButton onClick={handleCloseEditDialog} className="close-button">
-            <CloseIcon />
-          </IconButton>
+          <Typography variant="h6" color="#2752e7">
+            Edit Production Record
+          </Typography>
         </DialogTitle>
+
         <Divider />
+
         <form onSubmit={formik.handleSubmit}>
           <DialogContent className="dialog-content">
             <Grid container spacing={3}>
@@ -265,10 +484,13 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                   onChange={formik.handleChange}
                   error={formik.touched.date && Boolean(formik.errors.date)}
                   helperText={formik.touched.date && formik.errors.date}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
+                  InputLabelProps={{ shrink: true }}
                   className="form-field"
+                  sx={{
+                    input: { color: "#000" },
+                    label: { color: "#000" },
+                    "& .MuiFormHelperText-root": { color: "#d32f2f" },
+                  }}
                 />
               </Grid>
 
@@ -279,7 +501,9 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                   error={formik.touched.productType && Boolean(formik.errors.productType)}
                   className="form-field"
                 >
-                  <InputLabel id="edit-product-type-label">Product Type</InputLabel>
+                  <InputLabel id="edit-product-type-label" sx={{ color: "#000" }}>
+                    Product Type
+                  </InputLabel>
                   <Select
                     labelId="edit-product-type-label"
                     id="productType"
@@ -315,6 +539,11 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                   error={formik.touched.quantity && Boolean(formik.errors.quantity)}
                   helperText={formik.touched.quantity && formik.errors.quantity}
                   className="form-field"
+                  sx={{
+                    input: { color: "#000" },
+                    label: { color: "#000" },
+                    "& .MuiFormHelperText-root": { color: "#d32f2f" },
+                  }}
                 />
               </Grid>
 
@@ -325,7 +554,9 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                   error={formik.touched.unit && Boolean(formik.errors.unit)}
                   className="form-field"
                 >
-                  <InputLabel id="edit-unit-label">Unit</InputLabel>
+                  <InputLabel id="edit-unit-label" sx={{ color: "#000" }}>
+                    Unit
+                  </InputLabel>
                   <Select
                     labelId="edit-unit-label"
                     id="unit"
@@ -333,6 +564,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                     value={formik.values.unit}
                     onChange={formik.handleChange}
                     label="Unit"
+                    sx={{ color: "#000" }}
                   >
                     {units.map((unit) => (
                       <MenuItem key={unit} value={unit}>
@@ -355,7 +587,9 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                   error={formik.touched.quality && Boolean(formik.errors.quality)}
                   className="form-field"
                 >
-                  <InputLabel id="edit-quality-label">Quality</InputLabel>
+                  <InputLabel id="edit-quality-label" sx={{ color: "#000" }}>
+                    Quality
+                  </InputLabel>
                   <Select
                     labelId="edit-quality-label"
                     id="quality"
@@ -363,6 +597,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                     value={formik.values.quality}
                     onChange={formik.handleChange}
                     label="Quality"
+                    sx={{ color: "#000" }}
                   >
                     {qualityLevels.map((quality) => (
                       <MenuItem key={quality} value={quality}>
@@ -390,6 +625,11 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                   error={formik.touched.machineId && Boolean(formik.errors.machineId)}
                   helperText={formik.touched.machineId && formik.errors.machineId}
                   className="form-field"
+                  sx={{
+                    input: { color: "#000" },
+                    label: { color: "#000" },
+                    "& .MuiFormHelperText-root": { color: "#d32f2f" },
+                  }}
                 />
               </Grid>
 
@@ -405,11 +645,18 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                   error={formik.touched.supervisor && Boolean(formik.errors.supervisor)}
                   helperText={formik.touched.supervisor && formik.errors.supervisor}
                   className="form-field"
+                  sx={{
+                    input: { color: "#000" },
+                    label: { color: "#000" },
+                    "& .MuiFormHelperText-root": { color: "#d32f2f" },
+                  }}
                 />
               </Grid>
             </Grid>
           </DialogContent>
+
           <Divider />
+
           <DialogActions className="dialog-actions">
             <Button onClick={handleCloseEditDialog} className="cancel-button">
               Cancel
@@ -424,20 +671,24 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
       {/* View Dialog */}
       <Dialog open={openViewDialog} onClose={handleCloseViewDialog} maxWidth="md" fullWidth className="view-dialog">
         <DialogTitle className="dialog-title">
-          <Typography variant="h6">Production Record Details</Typography>
+          <Typography variant="h6" color="#2752e7">
+            Production Record Details
+          </Typography>
           <IconButton onClick={handleCloseViewDialog} className="close-button">
             <CloseIcon />
           </IconButton>
         </DialogTitle>
+
         <Divider />
-        <DialogContent className="dialog-content">
+
+        <DialogContent className="dialog-content view-dialog-content">
           {selectedItem && (
             <Grid container spacing={3} className="detail-grid">
               <Grid item xs={12} md={6} className="detail-item">
                 <Typography variant="subtitle2" className="detail-label">
                   Date
                 </Typography>
-                <Typography variant="body1" className="detail-value">
+                <Typography variant="body1" className="detail-value highlight-value">
                   {selectedItem.date}
                 </Typography>
               </Grid>
@@ -446,7 +697,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                 <Typography variant="subtitle2" className="detail-label">
                   Product Type
                 </Typography>
-                <Typography variant="body1" className="detail-value">
+                <Typography variant="body1" className="detail-value highlight-value">
                   {selectedItem.productType}
                 </Typography>
               </Grid>
@@ -455,7 +706,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                 <Typography variant="subtitle2" className="detail-label">
                   Quantity
                 </Typography>
-                <Typography variant="body1" className="detail-value">
+                <Typography variant="body1" className="detail-value highlight-value">
                   {selectedItem.quantity} {selectedItem.unit}
                 </Typography>
               </Grid>
@@ -476,7 +727,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                 <Typography variant="subtitle2" className="detail-label">
                   Machine ID
                 </Typography>
-                <Typography variant="body1" className="detail-value">
+                <Typography variant="body1" className="detail-value highlight-value">
                   {selectedItem.machineId}
                 </Typography>
               </Grid>
@@ -485,26 +736,28 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                 <Typography variant="subtitle2" className="detail-label">
                   Supervisor
                 </Typography>
-                <Typography variant="body1" className="detail-value">
+                <Typography variant="body1" className="detail-value highlight-value">
                   {selectedItem.supervisor}
                 </Typography>
               </Grid>
             </Grid>
           )}
         </DialogContent>
+
         <Divider />
-        <DialogActions className="dialog-actions">
-          <Button onClick={handleCloseViewDialog} className="close-button">
+
+        <DialogActions className="dialog-actions view-dialog-actions">
+          <Button onClick={handleCloseViewDialog} className="cancel-button">
             Close
           </Button>
           {isAdmin && (
             <Button
-              color="primary"
               onClick={() => {
                 handleCloseViewDialog()
                 handleOpenEditDialog(selectedItem)
               }}
               className="edit-button"
+              variant="contained"
             >
               Edit
             </Button>
@@ -515,7 +768,9 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
       {/* Delete Confirmation Dialog */}
       <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog} className="delete-dialog">
         <DialogTitle className="dialog-title">
-          <Typography variant="h6">Confirm Delete</Typography>
+          <Typography variant="h6" color="#2752e7">
+            Confirm Delete
+          </Typography>
         </DialogTitle>
         <Divider />
         <DialogContent className="dialog-content">
@@ -533,7 +788,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   )
 }
 

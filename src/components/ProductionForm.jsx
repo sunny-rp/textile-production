@@ -1,8 +1,17 @@
 "use client"
-import { TextField, Button, Grid, MenuItem, FormControl, InputLabel, Select, FormHelperText } from "@mui/material"
+import {
+  TextField,
+  Button,
+  Grid,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
+  FormHelperText,
+} from "@mui/material"
 import { useFormik } from "formik"
 import * as yup from "yup"
-// import "./productionForm.scss"
+
 
 const validationSchema = yup.object({
   date: yup.date().required("Date is required"),
@@ -25,7 +34,7 @@ const ProductionForm = ({ onSubmit }) => {
       machineId: "",
       supervisor: "",
     },
-    validationSchema: validationSchema,
+    validationSchema,
     onSubmit: (values, { resetForm }) => {
       onSubmit(values)
       resetForm()
@@ -40,7 +49,7 @@ const ProductionForm = ({ onSubmit }) => {
     <div className="production-form">
       <form onSubmit={formik.handleSubmit}>
         <Grid container spacing={2}>
-          <Grid item xs={12}>
+          <Grid item xs={12} md={4}>
             <TextField
               fullWidth
               id="date"
@@ -51,14 +60,12 @@ const ProductionForm = ({ onSubmit }) => {
               onChange={formik.handleChange}
               error={formik.touched.date && Boolean(formik.errors.date)}
               helperText={formik.touched.date && formik.errors.date}
-              InputLabelProps={{
-                shrink: true,
-              }}
+              InputLabelProps={{ shrink: true }}
               className="form-field"
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid item xs={12} md={4}>
             <FormControl
               fullWidth
               error={formik.touched.productType && Boolean(formik.errors.productType)}
@@ -79,13 +86,11 @@ const ProductionForm = ({ onSubmit }) => {
                   </MenuItem>
                 ))}
               </Select>
-              {formik.touched.productType && formik.errors.productType && (
-                <FormHelperText>{formik.errors.productType}</FormHelperText>
-              )}
+              <FormHelperText>{formik.touched.productType && formik.errors.productType}</FormHelperText>
             </FormControl>
           </Grid>
 
-          <Grid item xs={6}>
+          <Grid item xs={12} md={4}>
             <TextField
               fullWidth
               id="quantity"
@@ -100,8 +105,12 @@ const ProductionForm = ({ onSubmit }) => {
             />
           </Grid>
 
-          <Grid item xs={6}>
-            <FormControl fullWidth error={formik.touched.unit && Boolean(formik.errors.unit)} className="form-field">
+          <Grid item xs={12} md={4}>
+            <FormControl
+              fullWidth
+              error={formik.touched.unit && Boolean(formik.errors.unit)}
+              className="form-field"
+            >
               <InputLabel id="unit-label">Unit</InputLabel>
               <Select
                 labelId="unit-label"
@@ -117,11 +126,11 @@ const ProductionForm = ({ onSubmit }) => {
                   </MenuItem>
                 ))}
               </Select>
-              {formik.touched.unit && formik.errors.unit && <FormHelperText>{formik.errors.unit}</FormHelperText>}
+              <FormHelperText>{formik.touched.unit && formik.errors.unit}</FormHelperText>
             </FormControl>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid item xs={12} md={4}>
             <FormControl
               fullWidth
               error={formik.touched.quality && Boolean(formik.errors.quality)}
@@ -142,13 +151,11 @@ const ProductionForm = ({ onSubmit }) => {
                   </MenuItem>
                 ))}
               </Select>
-              {formik.touched.quality && formik.errors.quality && (
-                <FormHelperText>{formik.errors.quality}</FormHelperText>
-              )}
+              <FormHelperText>{formik.touched.quality && formik.errors.quality}</FormHelperText>
             </FormControl>
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid item xs={12} md={4}>
             <TextField
               fullWidth
               id="machineId"
@@ -177,7 +184,12 @@ const ProductionForm = ({ onSubmit }) => {
           </Grid>
 
           <Grid item xs={12}>
-            <Button type="submit" variant="contained" color="primary" fullWidth className="submit-button">
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              className="submit-button"
+            >
               Add Production Record
             </Button>
           </Grid>

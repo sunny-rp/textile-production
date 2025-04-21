@@ -2003,6 +2003,10 @@ body {
       padding: 10px !important;
     }
   }
+  .production-table-container {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
   
   .mvpLogo1 {
     display: none;
@@ -2106,13 +2110,23 @@ $border-radius: 8px;
 
 // Production Form
 .production-form {
+  display: flex;
+  flex-direction: column;
+
   .form-field {
     margin-bottom: 16px;
-    
+    background-color: #f8f8f8;
+    border-radius: 8px;
+
+    .MuiInputBase-root {
+      min-height: 56px; // consistent height across all inputs
+      padding: 0 8px;
+    }
+
     .MuiInputLabel-root {
       color: $text-secondary;
     }
-    
+
     .MuiOutlinedInput-root {
       &.Mui-focused {
         .MuiOutlinedInput-notchedOutline {
@@ -2120,26 +2134,28 @@ $border-radius: 8px;
         }
       }
     }
-    
+
     .MuiFormHelperText-root {
       margin-left: 0;
       margin-top: 4px;
     }
   }
-  
+
   .submit-button {
-    margin-top: 16px;
+    margin-top: 24px;
     background-color: $primary-color;
     color: white;
     text-transform: none;
     font-weight: 500;
     height: 48px;
-    
+    border-radius: 30px;
+
     &:hover {
       background-color: darken($primary-color, 10%);
     }
   }
 }
+
 
 // production table 
 // Variables
@@ -2160,183 +2176,105 @@ $transition-default: all 0.3s ease;
 $border-radius: 8px;
 
 // Production Table Container
-.production-table-container {
-  .table-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    
-    .search-filter {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      
-      .search-box {
-        display: flex;
-        align-items: center;
-        background-color: white;
-        border: 1px solid $border-color;
-        border-radius: 4px;
-        padding: 4px 12px;
-        width: 240px;
-        
-        .search-icon {
-          color: $text-secondary;
-          font-size: 20px;
-          margin-right: 8px;
-        }
-        
-        .search-input {
-          border: none;
-          outline: none;
-          flex: 1;
-          font-size: 14px;
-          
-          &::placeholder {
-            color: $text-secondary;
-          }
-        }
-      }
-      
-      .filter-button {
-        color: $text-secondary;
-        border-color: $border-color;
-        text-transform: none;
-        
-        &:hover {
-          background-color: rgba($text-secondary, 0.04);
-        }
-      }
-    }
-    
-    .export-button {
-      color: $primary-color;
-      border-color: $primary-color;
-      text-transform: none;
-      
-      &:hover {
-        background-color: rgba($primary-color, 0.04);
-      }
-    }
-  }
-  
-  .table-wrapper {
-    border-radius: $border-radius;
-    overflow: hidden;
-    
-    .table-row {
-      transition: $transition-default;
-      
-      .quality-chip {
-        font-size: 0.75rem;
-        height: 24px;
-      }
-      
-      .action-cell {
-        .action-button {
-          margin: 0 2px;
-          
-          &.view {
-            color: $info-color;
-          }
-          
-          &.edit {
-            color: $primary-color;
-          }
-          
-          &.delete {
-            color: $danger-color;
-          }
-        }
-      }
-    }
-    
-    .no-data {
-      padding: 24px;
-      color: $text-secondary;
-    }
-  }
-  
   // Dialog Styles
   .dialog-title {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 16px 24px;
-    
+
     .close-button {
       color: $text-secondary;
-      
+
       &:hover {
         background-color: rgba($text-secondary, 0.08);
       }
     }
   }
-  
+
   .dialog-content {
     padding: 24px;
-    
+
     .form-field {
       margin-bottom: 16px;
     }
-    
+
+    // 🔥 UPDATED STYLING FOR VIEW DIALOG
     .detail-grid {
       .detail-item {
         margin-bottom: 16px;
-        
+        padding: 12px 16px;
+        background-color: rgba($primary-color, 0.03);
+        border: 1px solid $border-color;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+
+        &:hover {
+          background-color: rgba($primary-color, 0.06);
+        }
+
         .detail-label {
           color: $text-secondary;
+          font-weight: 600;
           margin-bottom: 4px;
         }
-        
+
         .detail-value {
           color: $text-primary;
+          font-size: 15px;
           font-weight: 500;
         }
-        
+
+        // 💡 New class for consistent formatting
+        .highlight-value {
+          color: darken($text-primary, 10%);
+        }
+
         .detail-chip {
-          margin-top: 4px;
+          margin-top: 6px;
+          font-weight: 600;
+          font-size: 13px;
         }
       }
     }
-    
+
     .delete-message {
       color: $text-primary;
       text-align: center;
       padding: 16px 0;
     }
   }
-  
+
   .dialog-actions {
     padding: 16px 24px;
-    
+
     .cancel-button {
       color: $text-secondary;
       text-transform: none;
     }
-    
-    .save-button, .edit-button {
+
+    .save-button,
+    .edit-button {
       background-color: $primary-color;
       color: white;
       text-transform: none;
-      
+
       &:hover {
-        background-color: darken($primary-color, 10%);
+        background-color: "white";
       }
     }
-    
+
     .delete-button {
       background-color: $danger-color;
       color: white;
       text-transform: none;
-      
+
       &:hover {
         background-color: darken($danger-color, 10%);
       }
     }
   }
-}
+
 
 //dashboard layout 
 // Variables
@@ -2772,3 +2710,328 @@ $border-radius: 8px;
   }
 }
        
+
+
+// Variables
+$primary-color: #2752e7;
+$secondary-color: #bef856;
+$background-color: #f5f5f5;
+$card-bg: #ffffff;
+$text-primary: #333333;
+$text-secondary: #666666;
+$border-color: #e0e0e0;
+$success-color: #4caf50;
+$warning-color: #ff9800;
+$danger-color: #f44336;
+$info-color: #2196f3;
+$shadow-light: 0px 2px 10px rgba(0, 0, 0, 0.05);
+$shadow-medium: 0px 4px 12px rgba(0, 0, 0, 0.15);
+$transition-default: all 0.3s ease;
+$border-radius: 8px;
+
+// Production Table Container
+.production-table-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto;
+  
+  // Improved table toolbar with search and filter
+  .table-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    width: 100%;
+    gap: 16px;
+    
+    .search-field {
+      flex: 1;
+      background-color: white;
+      border-radius: 4px;
+      
+      .MuiOutlinedInput-root {
+        border-radius: 4px;
+        
+        &:hover .MuiOutlinedInput-notchedOutline {
+          border-color: $primary-color;
+        }
+        
+        &.Mui-focused .MuiOutlinedInput-notchedOutline {
+          border-color: $primary-color;
+        }
+      }
+      
+      .search-icon {
+        color: $text-secondary;
+      }
+    }
+    
+    .filter-button {
+      white-space: nowrap;
+      color: $text-secondary;
+      border-color: $border-color;
+      text-transform: none;
+      min-width: 100px;
+      
+      &:hover {
+        background-color: rgba($primary-color, 0.04);
+        border-color: $primary-color;
+        color: $primary-color;
+      }
+      
+      &.filter-active {
+        background-color: rgba($primary-color, 0.08);
+        border-color: $primary-color;
+        color: $primary-color;
+      }
+    }
+  }
+  
+  // Filter menu styling
+  .filter-menu {
+    .filter-menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      
+      .clear-filters-btn {
+        color: $primary-color;
+        text-transform: none;
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        
+        &:hover {
+          background-color: rgba($primary-color, 0.04);
+        }
+      }
+    }
+    
+    .filter-section {
+      padding: 12px 16px;
+      
+      .filter-section-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: $text-primary;
+      }
+      
+      .filter-option {
+        display: flex;
+        align-items: center;
+        margin: 4px 0;
+        
+        .MuiCheckbox-root {
+          padding: 4px;
+          color: $primary-color;
+        }
+      }
+    }
+    
+    .filter-menu-footer {
+      padding: 12px 16px;
+      
+      button {
+        background-color: $primary-color;
+        text-transform: none;
+        
+        &:hover {
+          background-color: darken($primary-color, 10%);
+        }
+      }
+    }
+  }
+  
+  // Active filters display
+  .active-filters {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+    
+    .active-filters-title {
+      font-weight: 500;
+      color: $text-primary;
+      margin-right: 8px;
+    }
+    
+    .filter-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      
+      .filter-chip {
+        background-color: rgba($primary-color, 0.08);
+        color: $primary-color;
+        border: 1px solid rgba($primary-color, 0.2);
+        
+      //   .MuiChip-deleteIcon {
+      //     color: $primary-color;
+          
+      //     &:  0.2);
+        
+      //   .MuiChip-deleteIcon {
+      //     color: $primary-color;
+          
+      //     &:hover {
+      //       color: darken($primary-color, 10%);
+      //     }
+      //   }
+      // }
+    }
+  }
+  
+  .table-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: $border-radius;
+    overflow: auto;
+    
+    .MuiTable-root {
+      width: 100%;
+      min-width: 800px; // Ensures table doesn't get too compressed
+    }
+    
+    .table-row {
+      transition: $transition-default;
+      
+      .quality-chip {
+        font-size: 0.75rem;
+        height: 24px;
+      }
+      
+      .action-cell {
+        .action-button {
+          margin: 0 2px;
+          
+          &.view {
+            color: $info-color;
+          }
+          
+          &.edit {
+            color: $primary-color;
+          }
+          
+          &.delete {
+            color: $danger-color;
+          }
+        }
+      }
+    }
+    
+    .no-data {
+      padding: 24px;
+      color: $text-secondary;
+    }
+  }
+  
+  // Dialog Styles
+  .dialog-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    
+    .close-button {
+      color: $text-secondary;
+      
+      &:hover {
+        background-color: rgba($text-secondary, 0.08);
+      }
+    }
+  }
+  
+  .dialog-content {
+    padding: 24px;
+    
+    .form-field {
+      margin-bottom: 16px;
+    }
+    
+    .detail-grid {
+      .detail-item {
+        margin-bottom: 16px;
+        
+        .detail-label {
+          color: $text-secondary;
+          margin-bottom: 4px;
+        }
+        
+        .detail-value {
+          color: $text-primary;
+          font-weight: 500;
+        }
+        
+        .highlight-value {
+          color: $primary-color;
+          font-weight: 600;
+        }
+        
+        .detail-chip {
+          margin-top: 4px;
+        }
+      }
+    }
+    
+    .delete-message {
+      color: $text-primary;
+      text-align: center;
+      padding: 16px 0;
+    }
+  }
+  
+  .dialog-actions {
+    padding: 16px 24px;
+    
+    .cancel-button {
+      color: $text-secondary;
+      text-transform: none;
+    }
+    
+    .save-button, .edit-button {
+      background-color: $primary-color;
+      color: white;
+      text-transform: none;
+      
+      &:hover {
+        background-color: darken($primary-color, 10%);
+      }
+    }
+    
+    .delete-button {
+      background-color: $danger-color;
+      color: white;
+      text-transform: none;
+      
+      &:hover {
+        background-color: darken($danger-color, 10%);
+      }
+    }
+  }
+}
+
+// Media queries for responsive design
+@media (max-width: 768px) {
+  .production-table-container {
+    .table-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+      
+      .filter-button {
+        align-self: flex-end;
+      }
+    }
+    
+    .active-filters {
+      flex-direction: column;
+      align-items: flex-start;
+      
+      .active-filters-title {
+        margin-bottom: 8px;
+      }
+    }
+  }
+}
+}

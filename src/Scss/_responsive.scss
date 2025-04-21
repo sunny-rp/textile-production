@@ -202,6 +202,16 @@
   
     }
   
+      .dashboard-header {
+        flex-direction: column;
+        
+        .add-button {
+          margin-top: 16px;
+          align-self: flex-end;
+        }
+      }
+  
+  
     .footerbotomText {
       gap: 35px;
       justify-content: center;

@@ -102,7 +102,7 @@ const baseOptions = {
           "&:focus": {
             borderColor: "#FFFFFF", // Example: change border color on focus
             outline: "none", // Remove default outline
-            backgroundColor: "transparent",
+            backgroundColor: "#000",
           },
         },
       },
@@ -253,7 +253,7 @@ const baseOptions = {
           borderWidth: "0px",
         },
         input: {
-          color: "#fff",
+          color: "#000",
           padding: "16px",
           fontSize: "16px",
           fontWeight: "400",
@@ -443,10 +443,8 @@ const baseOptions = {
           borderRadius: "8px",
           padding: "10px",
           background: "#0000000D",
-          // "height": "48px",
-
+    
           "&::before": {
-            // borderBottom: "1px solid #ffffff",
             left: "0",
             bottom: "0",
             content: '""',
@@ -478,13 +476,16 @@ const baseOptions = {
         input: {
           fontSize: 14,
           fontWeight: 400,
-          color: "#000000",
-
+          color: "#000000", // user input text
           lineHeight: "20px",
-          // textTransform: "math-auto",
+          "&::placeholder": {
+            color: "#888888", // placeholder color
+            opacity: 1,
+          },
         },
       },
     },
+    
     MuiBackdrop: {
       styleOverrides: {
         root: { backgroundColor: "rgba(0, 0, 0, 0.75)" },
@@ -566,7 +567,7 @@ const baseOptions = {
         },
         containedPrimary: {
           color: "#FFFFFF",
-          padding: "7.7px 50px",
+          padding: "7.7px 30px",
           textTransform: "capitalize",
           fontSize: "14px",
           fontWeight: "400",
@@ -626,26 +627,29 @@ const baseOptions = {
       },
     },
 
+   
     MuiSelect: {
       styleOverrides: {
         icon: {
-          color: "#757575",
+          color: "#757575", // Dropdown arrow
         },
         root: {
-          // height: "48px",
-          // padding: "16px 16px 10px 0px",
           background: "#0000000D !important",
           position: "relative",
           border: "1px solid #0000000D",
-          color: "#FFFFFFBF",
+          color: "#000000", // This affects label/input text
           padding: "0px",
           borderRadius: "8px",
+    
+          // This targets the actual selected value text
+          '& .MuiSelect-select': {
+            padding: "15px",
+            color: "#000000", // Ensures selected value is black
+          },
         },
       },
-      select: {
-        padding: "15px",
-      },
     },
+    
     MuiMenu: {
       styleOverrides: {
         list: {

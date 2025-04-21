@@ -8,9 +8,8 @@ import toast from "react-hot-toast"
 import DashboardLayout from "../../layout/DashboardLayout/DashboardLayout"
 import ProductionForm from "../../components/ProductionForm"
 import ProductionTable from "../../components/ProductionTable"
-// import "./dashboard.scss"
 
-// List of admin emails for role-based access control - same as defined in login component
+
 const ADMIN_EMAILS = ["admin@textile.com", "manager@textile.com", "supervisor@textile.com"]
 
 const Dashboard = () => {
@@ -52,6 +51,26 @@ const Dashboard = () => {
       machineId: "M003",
       supervisor: "Robert Johnson",
     },
+    {
+      id: 4,
+      date: "2023-06-18",
+      productType: "Wool",
+      quantity: 300,
+      unit: "meters",
+      quality: "Standard",
+      machineId: "M004",
+      supervisor: "Emily Davis",
+    },
+    {
+      id: 5,
+      date: "2023-06-19",
+      productType: "Denim",
+      quantity: 450,
+      unit: "meters",
+      quality: "Economy",
+      machineId: "M005",
+      supervisor: "Michael Wilson",
+    },
   ]
 
   useEffect(() => {
@@ -59,9 +78,26 @@ const Dashboard = () => {
     const storedUserData = localStorage.getItem("userData")
 
     if (!storedUserData) {
-      // If no user data, redirect to login
-      toast.error("Please login to access the dashboard")
-      router.push("/auth/login")
+      // For testing purposes, you can use this mock data
+      // In production, redirect to login
+      const mockUser = {
+        name: "Test User",
+        email: "admin@textile.com", // Admin email for testing admin view
+        role: "admin",
+      }
+      localStorage.setItem("userData", JSON.stringify(mockUser))
+      const parsedUserData = mockUser
+
+      // Determine if user is admin based on email
+      const userEmail = parsedUserData.email?.toLowerCase()
+      const adminStatus = ADMIN_EMAILS.includes(userEmail)
+
+      setUserData(parsedUserData)
+      setIsAdmin(adminStatus)
+
+      setProductionData(initialData)
+      setIsLoading(false)
+
       return
     }
 
@@ -116,7 +152,6 @@ const Dashboard = () => {
     toast.success("Production data deleted successfully")
   }
 
-  // Calculate summary statistics
   const totalProduction = productionData.reduce((sum, item) => sum + item.quantity, 0)
   const premiumCount = productionData.filter((item) => item.quality === "Premium").length
   const standardCount = productionData.filter((item) => item.quality === "Standard").length
@@ -148,7 +183,6 @@ const Dashboard = () => {
           </Typography>
         </div>
 
-        {/* Add Production button - only visible to admins */}
         {isAdmin && !showAddForm && (
           <Button
             variant="contained"
@@ -161,7 +195,6 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Statistics cards - only visible to admins */}
       {isAdmin && (
         <Grid container spacing={3} className="stats-container">
           <Grid item xs={12} sm={6} md={3}>
@@ -266,40 +299,49 @@ const Dashboard = () => {
         </Grid>
       )}
 
-      <Grid container spacing={3} className="content-container">
-        {/* Production Form - only visible to admins */}
-        {isAdmin && showAddForm && (
-          <Grid item xs={12} md={5}>
-            <Paper className="form-paper">
-              <div className="form-header">
-                <Typography variant="h6" className="form-title">
-                  Add Production Details
-                </Typography>
-                <Button variant="outlined" size="small" className="cancel-button" onClick={() => setShowAddForm(false)}>
-                  Cancel
-                </Button>
-              </div>
-              <Divider className="form-divider" />
-              <ProductionForm onSubmit={handleAddProduction} />
+      {/* Modified layout to ensure the table always takes full width */}
+      <Box sx={{ width: "100%", maxWidth: "100%" }} className="content-container">
+        <Grid container spacing={3}>
+          {/* Form column - only shown when adding production */}
+          {isAdmin && showAddForm && (
+            <Grid item xs={12} md={4}>
+              <Paper className="form-paper">
+                <div className="form-header">
+                  <Typography variant="h6" className="form-title">
+                    Add Production Details
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    className="cancel-button"
+                    onClick={() => setShowAddForm(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                <Divider className="form-divider" />
+                <ProductionForm onSubmit={handleAddProduction} />
+              </Paper>
+            </Grid>
+          )}
+
+          {/* Table column - always shown and takes full width when form is not shown */}
+          <Grid item xs={12} md={isAdmin && showAddForm ? 8 : 12}>
+            <Paper className="table-paper" sx={{ width: "100%", maxWidth: "100%" }}>
+              <Typography variant="h6" className="table-title">
+                Production Records
+              </Typography>
+              <Divider className="table-divider" />
+              <ProductionTable
+                data={productionData}
+                isAdmin={isAdmin}
+                onUpdate={isAdmin ? handleUpdateProduction : undefined}
+                onDelete={isAdmin ? handleDeleteProduction : undefined}
+              />
             </Paper>
           </Grid>
-        )}
-
-        <Grid item xs={12} md={showAddForm && isAdmin ? 7 : 12}>
-          <Paper className="table-paper">
-            <Typography variant="h6" className="table-title">
-              Production Records
-            </Typography>
-            <Divider className="table-divider" />
-            <ProductionTable
-              data={productionData}
-              isAdmin={isAdmin}
-              onUpdate={isAdmin ? handleUpdateProduction : undefined}
-              onDelete={isAdmin ? handleDeleteProduction : undefined}
-            />
-          </Paper>
         </Grid>
-      </Grid>
+      </Box>
     </div>
   )
 }

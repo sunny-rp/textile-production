@@ -1727,6 +1727,11 @@ figure {
   padding: 10px !important;
 }
 
+.production-table-container {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
 .mvpLogo1 {
   display: none;
 }
@@ -1800,8 +1805,18 @@ figure {
   background: rgba(0, 0, 0, 0.07);
 }
 
+.production-form {
+  display: flex;
+  flex-direction: column;
+}
 .production-form .form-field {
   margin-bottom: 16px;
+  background-color: #f8f8f8;
+  border-radius: 8px;
+}
+.production-form .form-field .MuiInputBase-root {
+  min-height: 56px;
+  padding: 0 8px;
 }
 .production-form .form-field .MuiInputLabel-root {
   color: #666666;
@@ -1814,155 +1829,95 @@ figure {
   margin-top: 4px;
 }
 .production-form .submit-button {
-  margin-top: 16px;
+  margin-top: 24px;
   background-color: #2752e7;
   color: white;
   text-transform: none;
   font-weight: 500;
   height: 48px;
+  border-radius: 30px;
 }
 .production-form .submit-button:hover {
   background-color: #163dc5;
 }
 
-.production-table-container .table-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.production-table-container .table-toolbar .search-filter {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.production-table-container .table-toolbar .search-filter .search-box {
-  display: flex;
-  align-items: center;
-  background-color: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  padding: 4px 12px;
-  width: 240px;
-}
-.production-table-container .table-toolbar .search-filter .search-box .search-icon {
-  color: #666666;
-  font-size: 20px;
-  margin-right: 8px;
-}
-.production-table-container .table-toolbar .search-filter .search-box .search-input {
-  border: none;
-  outline: none;
-  flex: 1;
-  font-size: 14px;
-}
-.production-table-container .table-toolbar .search-filter .search-box .search-input::-moz-placeholder {
-  color: #666666;
-}
-.production-table-container .table-toolbar .search-filter .search-box .search-input::placeholder {
-  color: #666666;
-}
-.production-table-container .table-toolbar .search-filter .filter-button {
-  color: #666666;
-  border-color: #e0e0e0;
-  text-transform: none;
-}
-.production-table-container .table-toolbar .search-filter .filter-button:hover {
-  background-color: rgba(102, 102, 102, 0.04);
-}
-.production-table-container .table-toolbar .export-button {
-  color: #2752e7;
-  border-color: #2752e7;
-  text-transform: none;
-}
-.production-table-container .table-toolbar .export-button:hover {
-  background-color: rgba(39, 82, 231, 0.04);
-}
-.production-table-container .table-wrapper {
-  border-radius: 8px;
-  overflow: hidden;
-}
-.production-table-container .table-wrapper .table-row {
-  transition: all 0.3s ease;
-}
-.production-table-container .table-wrapper .table-row .quality-chip {
-  font-size: 0.75rem;
-  height: 24px;
-}
-.production-table-container .table-wrapper .table-row .action-cell .action-button {
-  margin: 0 2px;
-}
-.production-table-container .table-wrapper .table-row .action-cell .action-button.view {
-  color: #2196f3;
-}
-.production-table-container .table-wrapper .table-row .action-cell .action-button.edit {
-  color: #2752e7;
-}
-.production-table-container .table-wrapper .table-row .action-cell .action-button.delete {
-  color: #f44336;
-}
-.production-table-container .table-wrapper .no-data {
-  padding: 24px;
-  color: #666666;
-}
-.production-table-container .dialog-title {
+.dialog-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
 }
-.production-table-container .dialog-title .close-button {
+.dialog-title .close-button {
   color: #666666;
 }
-.production-table-container .dialog-title .close-button:hover {
+.dialog-title .close-button:hover {
   background-color: rgba(102, 102, 102, 0.08);
 }
-.production-table-container .dialog-content {
+
+.dialog-content {
   padding: 24px;
 }
-.production-table-container .dialog-content .form-field {
+.dialog-content .form-field {
   margin-bottom: 16px;
 }
-.production-table-container .dialog-content .detail-grid .detail-item {
+.dialog-content .detail-grid .detail-item {
   margin-bottom: 16px;
+  padding: 12px 16px;
+  background-color: rgba(39, 82, 231, 0.03);
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
 }
-.production-table-container .dialog-content .detail-grid .detail-item .detail-label {
+.dialog-content .detail-grid .detail-item:hover {
+  background-color: rgba(39, 82, 231, 0.06);
+}
+.dialog-content .detail-grid .detail-item .detail-label {
   color: #666666;
+  font-weight: 600;
   margin-bottom: 4px;
 }
-.production-table-container .dialog-content .detail-grid .detail-item .detail-value {
+.dialog-content .detail-grid .detail-item .detail-value {
   color: #333333;
+  font-size: 15px;
   font-weight: 500;
 }
-.production-table-container .dialog-content .detail-grid .detail-item .detail-chip {
-  margin-top: 4px;
+.dialog-content .detail-grid .detail-item .highlight-value {
+  color: #1a1a1a;
 }
-.production-table-container .dialog-content .delete-message {
+.dialog-content .detail-grid .detail-item .detail-chip {
+  margin-top: 6px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.dialog-content .delete-message {
   color: #333333;
   text-align: center;
   padding: 16px 0;
 }
-.production-table-container .dialog-actions {
+
+.dialog-actions {
   padding: 16px 24px;
 }
-.production-table-container .dialog-actions .cancel-button {
+.dialog-actions .cancel-button {
   color: #666666;
   text-transform: none;
 }
-.production-table-container .dialog-actions .save-button, .production-table-container .dialog-actions .edit-button {
+.dialog-actions .save-button,
+.dialog-actions .edit-button {
   background-color: #2752e7;
   color: white;
   text-transform: none;
 }
-.production-table-container .dialog-actions .save-button:hover, .production-table-container .dialog-actions .edit-button:hover {
-  background-color: #163dc5;
+.dialog-actions .save-button:hover,
+.dialog-actions .edit-button:hover {
+  background-color: "white";
 }
-.production-table-container .dialog-actions .delete-button {
+.dialog-actions .delete-button {
   background-color: #f44336;
   color: white;
   text-transform: none;
 }
-.production-table-container .dialog-actions .delete-button:hover {
+.dialog-actions .delete-button:hover {
   background-color: #ea1c0d;
 }
 
@@ -2287,6 +2242,232 @@ figure {
   margin-bottom: 24px;
 }
 
+.production-table-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto;
+}
+.production-table-container .table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  width: 100%;
+  gap: 16px;
+}
+.production-table-container .table-toolbar .search-field {
+  flex: 1;
+  background-color: white;
+  border-radius: 4px;
+}
+.production-table-container .table-toolbar .search-field .MuiOutlinedInput-root {
+  border-radius: 4px;
+}
+.production-table-container .table-toolbar .search-field .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: #2752e7;
+}
+.production-table-container .table-toolbar .search-field .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #2752e7;
+}
+.production-table-container .table-toolbar .search-field .search-icon {
+  color: #666666;
+}
+.production-table-container .table-toolbar .filter-button {
+  white-space: nowrap;
+  color: #666666;
+  border-color: #e0e0e0;
+  text-transform: none;
+  min-width: 100px;
+}
+.production-table-container .table-toolbar .filter-button:hover {
+  background-color: rgba(39, 82, 231, 0.04);
+  border-color: #2752e7;
+  color: #2752e7;
+}
+.production-table-container .table-toolbar .filter-button.filter-active {
+  background-color: rgba(39, 82, 231, 0.08);
+  border-color: #2752e7;
+  color: #2752e7;
+}
+.production-table-container .filter-menu .filter-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+}
+.production-table-container .filter-menu .filter-menu-header .clear-filters-btn {
+  color: #2752e7;
+  text-transform: none;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+}
+.production-table-container .filter-menu .filter-menu-header .clear-filters-btn:hover {
+  background-color: rgba(39, 82, 231, 0.04);
+}
+.production-table-container .filter-menu .filter-section {
+  padding: 12px 16px;
+}
+.production-table-container .filter-menu .filter-section .filter-section-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333333;
+}
+.production-table-container .filter-menu .filter-section .filter-option {
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
+}
+.production-table-container .filter-menu .filter-section .filter-option .MuiCheckbox-root {
+  padding: 4px;
+  color: #2752e7;
+}
+.production-table-container .filter-menu .filter-menu-footer {
+  padding: 12px 16px;
+}
+.production-table-container .filter-menu .filter-menu-footer button {
+  background-color: #2752e7;
+  text-transform: none;
+}
+.production-table-container .filter-menu .filter-menu-footer button:hover {
+  background-color: #163dc5;
+}
+.production-table-container .active-filters {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.production-table-container .active-filters .active-filters-title {
+  font-weight: 500;
+  color: #333333;
+  margin-right: 8px;
+}
+.production-table-container .active-filters .filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.production-table-container .active-filters .filter-chips .filter-chip {
+  background-color: rgba(39, 82, 231, 0.08);
+  color: #2752e7;
+  border: 1px solid rgba(39, 82, 231, 0.2);
+}
+.production-table-container .active-filters .table-wrapper {
+  width: 100% !important;
+  max-width: 100% !important;
+  border-radius: 8px;
+  overflow: auto;
+}
+.production-table-container .active-filters .table-wrapper .MuiTable-root {
+  width: 100%;
+  min-width: 800px;
+}
+.production-table-container .active-filters .table-wrapper .table-row {
+  transition: all 0.3s ease;
+}
+.production-table-container .active-filters .table-wrapper .table-row .quality-chip {
+  font-size: 0.75rem;
+  height: 24px;
+}
+.production-table-container .active-filters .table-wrapper .table-row .action-cell .action-button {
+  margin: 0 2px;
+}
+.production-table-container .active-filters .table-wrapper .table-row .action-cell .action-button.view {
+  color: #2196f3;
+}
+.production-table-container .active-filters .table-wrapper .table-row .action-cell .action-button.edit {
+  color: #2752e7;
+}
+.production-table-container .active-filters .table-wrapper .table-row .action-cell .action-button.delete {
+  color: #f44336;
+}
+.production-table-container .active-filters .table-wrapper .no-data {
+  padding: 24px;
+  color: #666666;
+}
+.production-table-container .active-filters .dialog-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+}
+.production-table-container .active-filters .dialog-title .close-button {
+  color: #666666;
+}
+.production-table-container .active-filters .dialog-title .close-button:hover {
+  background-color: rgba(102, 102, 102, 0.08);
+}
+.production-table-container .active-filters .dialog-content {
+  padding: 24px;
+}
+.production-table-container .active-filters .dialog-content .form-field {
+  margin-bottom: 16px;
+}
+.production-table-container .active-filters .dialog-content .detail-grid .detail-item {
+  margin-bottom: 16px;
+}
+.production-table-container .active-filters .dialog-content .detail-grid .detail-item .detail-label {
+  color: #666666;
+  margin-bottom: 4px;
+}
+.production-table-container .active-filters .dialog-content .detail-grid .detail-item .detail-value {
+  color: #333333;
+  font-weight: 500;
+}
+.production-table-container .active-filters .dialog-content .detail-grid .detail-item .highlight-value {
+  color: #2752e7;
+  font-weight: 600;
+}
+.production-table-container .active-filters .dialog-content .detail-grid .detail-item .detail-chip {
+  margin-top: 4px;
+}
+.production-table-container .active-filters .dialog-content .delete-message {
+  color: #333333;
+  text-align: center;
+  padding: 16px 0;
+}
+.production-table-container .active-filters .dialog-actions {
+  padding: 16px 24px;
+}
+.production-table-container .active-filters .dialog-actions .cancel-button {
+  color: #666666;
+  text-transform: none;
+}
+.production-table-container .active-filters .dialog-actions .save-button, .production-table-container .active-filters .dialog-actions .edit-button {
+  background-color: #2752e7;
+  color: white;
+  text-transform: none;
+}
+.production-table-container .active-filters .dialog-actions .save-button:hover, .production-table-container .active-filters .dialog-actions .edit-button:hover {
+  background-color: #163dc5;
+}
+.production-table-container .active-filters .dialog-actions .delete-button {
+  background-color: #f44336;
+  color: white;
+  text-transform: none;
+}
+.production-table-container .active-filters .dialog-actions .delete-button:hover {
+  background-color: #ea1c0d;
+}
+@media (max-width: 768px) {
+  .production-table-container .production-table-container .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .production-table-container .production-table-container .table-toolbar .filter-button {
+    align-self: flex-end;
+  }
+  .production-table-container .production-table-container .active-filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .production-table-container .production-table-container .active-filters .active-filters-title {
+    margin-bottom: 8px;
+  }
+}
+
 @media (max-width: 1440px) {
   .videoBox {
     margin-top: -179px;
@@ -2429,6 +2610,13 @@ figure {
   }
   .footerTopbar {
     padding: 5px 6px;
+  }
+  .dashboard-header {
+    flex-direction: column;
+  }
+  .dashboard-header .add-button {
+    margin-top: 16px;
+    align-self: flex-end;
   }
   .footerbotomText {
     gap: 35px;
