@@ -2110,8 +2110,8 @@ $border-radius: 8px;
 
 // Production Form
 .production-form {
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
 
   .form-field {
     margin-bottom: 16px;
@@ -2149,7 +2149,13 @@ $border-radius: 8px;
     font-weight: 500;
     height: 48px;
     border-radius: 30px;
-
+    padding: 0 32px;
+  
+    // Center the button within its container
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  
     &:hover {
       background-color: darken($primary-color, 10%);
     }
@@ -2371,6 +2377,7 @@ $transition-default: all 0.3s ease;
     padding: 16px;
     
     .sidebar-title {
+      padding: 20px;
       font-weight: 700;
       color: $primary-color;
     }
@@ -3034,4 +3041,30 @@ $border-radius: 8px;
     }
   }
 }
+}
+
+.page-title {
+  margin-bottom: 0.5rem;
+}
+
+.form-paper, .table-paper {
+  padding: 1rem;
+}
+
+.cancel-button {
+  margin-top: 0.5rem;
+}
+
+.dashboard-container {
+  display: flex;
+  position: relative;
+}
+
+.dashboard-header {
+  margin-bottom: 1rem;
+}
+
+.form-paper,
+.table-paper {
+  padding: 1rem;
 }

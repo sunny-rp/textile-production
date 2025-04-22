@@ -12,27 +12,24 @@ import {
 import { useFormik } from "formik"
 import * as yup from "yup"
 
-
 const validationSchema = yup.object({
-  date: yup.date().required("Date is required"),
-  productType: yup.string().required("Product type is required"),
-  quantity: yup.number().positive("Quantity must be positive").required("Quantity is required"),
-  unit: yup.string().required("Unit is required"),
-  quality: yup.string().required("Quality is required"),
-  machineId: yup.string().required("Machine ID is required"),
-  supervisor: yup.string().required("Supervisor name is required"),
+  material: yup.string().required("Material is required"),
+  t1: yup.string().required("T1 is required"),
+  materialDescription: yup.string().required("Material description is required"),
+  flameAdhesive: yup.string().required("Flame / Adhesive is required"),
+  colorway: yup.string().required("Colorway is required"),
+  width: yup.number().positive("Width must be positive").required("Width is required"),
 })
 
 const ProductionForm = ({ onSubmit }) => {
   const formik = useFormik({
     initialValues: {
-      date: new Date().toISOString().split("T")[0],
-      productType: "",
-      quantity: "",
-      unit: "meters",
-      quality: "Standard",
-      machineId: "",
-      supervisor: "",
+      material: "",
+      t1: "",
+      materialDescription: "",
+      flameAdhesive: "",
+      colorway: "",
+      width: "",
     },
     validationSchema,
     onSubmit: (values, { resetForm }) => {
@@ -41,10 +38,6 @@ const ProductionForm = ({ onSubmit }) => {
     },
   })
 
-  const productTypes = ["Cotton Fabric", "Polyester Blend", "Silk", "Wool", "Linen", "Denim", "Nylon", "Rayon"]
-  const qualityLevels = ["Premium", "Standard", "Economy"]
-  const units = ["meters", "yards", "pieces", "kg"]
-
   return (
     <div className="production-form">
       <form onSubmit={formik.handleSubmit}>
@@ -52,15 +45,41 @@ const ProductionForm = ({ onSubmit }) => {
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              id="date"
-              name="date"
-              label="Production Date"
-              type="date"
-              value={formik.values.date}
+              id="material"
+              name="material"
+              label="Material"
+              value={formik.values.material}
               onChange={formik.handleChange}
-              error={formik.touched.date && Boolean(formik.errors.date)}
-              helperText={formik.touched.date && formik.errors.date}
-              InputLabelProps={{ shrink: true }}
+              error={formik.touched.material && Boolean(formik.errors.material)}
+              helperText={formik.touched.material && formik.errors.material}
+              className="form-field"
+            />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              id="t1"
+              name="t1"
+              label="T1"
+              value={formik.values.t1}
+              onChange={formik.handleChange}
+              error={formik.touched.t1 && Boolean(formik.errors.t1)}
+              helperText={formik.touched.t1 && formik.errors.t1}
+              className="form-field"
+            />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              id="materialDescription"
+              name="materialDescription"
+              label="Material Description"
+              value={formik.values.materialDescription}
+              onChange={formik.handleChange}
+              error={formik.touched.materialDescription && Boolean(formik.errors.materialDescription)}
+              helperText={formik.touched.materialDescription && formik.errors.materialDescription}
               className="form-field"
             />
           </Grid>
@@ -68,131 +87,75 @@ const ProductionForm = ({ onSubmit }) => {
           <Grid item xs={12} md={4}>
             <FormControl
               fullWidth
-              error={formik.touched.productType && Boolean(formik.errors.productType)}
+              error={formik.touched.flameAdhesive && Boolean(formik.errors.flameAdhesive)}
               className="form-field"
             >
-              <InputLabel id="product-type-label">Product Type</InputLabel>
+              <InputLabel id="flame-adhesive-label">Flame / Adhesive</InputLabel>
               <Select
-                labelId="product-type-label"
-                id="productType"
-                name="productType"
-                value={formik.values.productType}
+                labelId="flame-adhesive-label"
+                id="flameAdhesive"
+                name="flameAdhesive"
+                value={formik.values.flameAdhesive}
                 onChange={formik.handleChange}
-                label="Product Type"
+                label="Flame / Adhesive"
+                sx={{
+                  width: '245px',
+                  '& .MuiSelect-select': {
+                    paddingLeft: "12px",
+                    textAlign: "left",
+                    color: "#000000",
+                  },   
+                  '@media (max-width: 320px)': {
+                    width: '224px',
+                  }
+                }}
+                
               >
-                {productTypes.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
+                <MenuItem value="Flame">Flame</MenuItem>
+                <MenuItem value="Adhesive">Adhesive</MenuItem>
               </Select>
-              <FormHelperText>{formik.touched.productType && formik.errors.productType}</FormHelperText>
+              <FormHelperText>{formik.touched.flameAdhesive && formik.errors.flameAdhesive}</FormHelperText>
             </FormControl>
           </Grid>
 
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              id="quantity"
-              name="quantity"
-              label="Quantity"
+              id="colorway"
+              name="colorway"
+              label="Colorway"
+              value={formik.values.colorway}
+              onChange={formik.handleChange}
+              error={formik.touched.colorway && Boolean(formik.errors.colorway)}
+              helperText={formik.touched.colorway && formik.errors.colorway}
+              className="form-field"
+            />
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              id="width"
+              name="width"
+              label="Width"
               type="number"
-              value={formik.values.quantity}
+              value={formik.values.width}
               onChange={formik.handleChange}
-              error={formik.touched.quantity && Boolean(formik.errors.quantity)}
-              helperText={formik.touched.quantity && formik.errors.quantity}
+              error={formik.touched.width && Boolean(formik.errors.width)}
+              helperText={formik.touched.width && formik.errors.width}
               className="form-field"
             />
           </Grid>
 
-          <Grid item xs={12} md={4}>
-            <FormControl
-              fullWidth
-              error={formik.touched.unit && Boolean(formik.errors.unit)}
-              className="form-field"
-            >
-              <InputLabel id="unit-label">Unit</InputLabel>
-              <Select
-                labelId="unit-label"
-                id="unit"
-                name="unit"
-                value={formik.values.unit}
-                onChange={formik.handleChange}
-                label="Unit"
-              >
-                {units.map((unit) => (
-                  <MenuItem key={unit} value={unit}>
-                    {unit}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>{formik.touched.unit && formik.errors.unit}</FormHelperText>
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <FormControl
-              fullWidth
-              error={formik.touched.quality && Boolean(formik.errors.quality)}
-              className="form-field"
-            >
-              <InputLabel id="quality-label">Quality</InputLabel>
-              <Select
-                labelId="quality-label"
-                id="quality"
-                name="quality"
-                value={formik.values.quality}
-                onChange={formik.handleChange}
-                label="Quality"
-              >
-                {qualityLevels.map((quality) => (
-                  <MenuItem key={quality} value={quality}>
-                    {quality}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>{formik.touched.quality && formik.errors.quality}</FormHelperText>
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              id="machineId"
-              name="machineId"
-              label="Machine ID"
-              value={formik.values.machineId}
-              onChange={formik.handleChange}
-              error={formik.touched.machineId && Boolean(formik.errors.machineId)}
-              helperText={formik.touched.machineId && formik.errors.machineId}
-              className="form-field"
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              id="supervisor"
-              name="supervisor"
-              label="Supervisor"
-              value={formik.values.supervisor}
-              onChange={formik.handleChange}
-              error={formik.touched.supervisor && Boolean(formik.errors.supervisor)}
-              helperText={formik.touched.supervisor && formik.errors.supervisor}
-              className="form-field"
-            />
-          </Grid>
-
-          <Grid item xs={12}>
+          <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
             <Button
               type="submit"
               variant="contained"
-              fullWidth
               className="submit-button"
             >
               Add Production Record
             </Button>
-          </Grid>
+          </div>
         </Grid>
       </form>
     </div>

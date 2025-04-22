@@ -305,7 +305,7 @@ const baseOptions = {
         root: {
           boxShadow: "none",
           color: "#fff",
-          width: "Auto",
+          width: "auto",
           // '&.MuiAccordion-root .MuiCollapse-wrapper': {
           //   marginTop: "20px !important",
           // },
@@ -315,7 +315,7 @@ const baseOptions = {
           },
           "&.MuiAccordion-root.Mui-expanded:last-of-type": {
             background: "none !important",
-            backgroundColor: "none !important",
+            backgroundColor: "none !important", 
           },
         },
       },
@@ -643,7 +643,8 @@ const baseOptions = {
     
           // This targets the actual selected value text
           '& .MuiSelect-select': {
-            padding: "15px",
+            paddingLeft: "30px",
+            // textAlign: "left",
             color: "#000000", // Ensures selected value is black
           },
         },

@@ -626,3 +626,12 @@
       max-width: 320px;
     }
   }
+
+
+  @media (max-width: 600px) {
+    .submit-button {
+      padding: 0 24px;
+      width: 100%;
+      max-width: 280px;
+    }
+  }

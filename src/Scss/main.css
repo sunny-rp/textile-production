@@ -1806,8 +1806,8 @@ figure {
 }
 
 .production-form {
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
 }
 .production-form .form-field {
   margin-bottom: 16px;
@@ -1836,6 +1836,10 @@ figure {
   font-weight: 500;
   height: 48px;
   border-radius: 30px;
+  padding: 0 32px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 .production-form .submit-button:hover {
   background-color: #163dc5;
@@ -1985,6 +1989,7 @@ figure {
   padding: 16px;
 }
 .sidebar-container .sidebar-header .sidebar-title {
+  padding: 20px;
   font-weight: 700;
   color: #2752e7;
 }
@@ -2468,6 +2473,32 @@ figure {
   }
 }
 
+.page-title {
+  margin-bottom: 0.5rem;
+}
+
+.form-paper, .table-paper {
+  padding: 1rem;
+}
+
+.cancel-button {
+  margin-top: 0.5rem;
+}
+
+.dashboard-container {
+  display: flex;
+  position: relative;
+}
+
+.dashboard-header {
+  margin-bottom: 1rem;
+}
+
+.form-paper,
+.table-paper {
+  padding: 1rem;
+}
+
 @media (max-width: 1440px) {
   .videoBox {
     margin-top: -179px;
@@ -2925,5 +2956,12 @@ figure {
   }
   .rulesCard-exchange {
     max-width: 320px;
+  }
+}
+@media (max-width: 600px) {
+  .submit-button {
+    padding: 0 24px;
+    width: 100%;
+    max-width: 280px;
   }
 }/*# sourceMappingURL=main.css.map */
