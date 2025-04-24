@@ -2157,7 +2157,8 @@ $border-radius: 8px;
     margin-right: auto;
   
     &:hover {
-      background-color: darken($primary-color, 10%);
+      background-color: #fff;
+      color: #000;
     }
   }
 }

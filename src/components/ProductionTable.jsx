@@ -71,13 +71,12 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 }))
 
 const validationSchema = yup.object({
-  date: yup.date().required("Date is required"),
-  productType: yup.string().required("Product type is required"),
-  quantity: yup.number().positive("Quantity must be positive").required("Quantity is required"),
-  unit: yup.string().required("Unit is required"),
-  quality: yup.string().required("Quality is required"),
-  machineId: yup.string().required("Machine ID is required"),
-  supervisor: yup.string().required("Supervisor name is required"),
+  material: yup.string().required("Material is required"),
+  t1: yup.string().required("T1 is required"),
+  materialDescription: yup.string().required("Material description is required"),
+  flameAdhesive: yup.string().required("Flame / Adhesive is required"),
+  colorway: yup.string().required("Colorway is required"),
+  width: yup.number().positive("Width must be positive").required("Width is required"),
 })
 
 const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
@@ -89,13 +88,11 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
   const [filteredData, setFilteredData] = useState(data)
   const [filterAnchorEl, setFilterAnchorEl] = useState(null)
   const [selectedFilters, setSelectedFilters] = useState({
-    productType: [],
-    quality: [],
+    material: [],
+    flameAdhesive: [],
   })
 
-  const productTypes = ["Cotton Fabric", "Polyester Blend", "Silk", "Wool", "Linen", "Denim", "Nylon", "Rayon"]
-  const qualityLevels = ["Premium", "Standard", "Economy"]
-  const units = ["meters", "yards", "pieces", "kg"]
+  const flameAdhesiveOptions = ["Flame", "Adhesive"]
 
   // Update filtered data when data, search term, or filters change
   useEffect(() => {
@@ -106,22 +103,22 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
       const searchLower = searchTerm.toLowerCase()
       result = result.filter(
         (item) =>
-          item.productType.toLowerCase().includes(searchLower) ||
-          item.machineId.toLowerCase().includes(searchLower) ||
-          item.supervisor.toLowerCase().includes(searchLower) ||
-          item.date.includes(searchTerm) ||
-          item.quantity.toString().includes(searchTerm),
+          (item.material && item.material.toLowerCase().includes(searchLower)) ||
+          (item.t1 && item.t1.toLowerCase().includes(searchLower)) ||
+          (item.materialDescription && item.materialDescription.toLowerCase().includes(searchLower)) ||
+          (item.colorway && item.colorway.toLowerCase().includes(searchLower)) ||
+          (item.width && item.width.toString().includes(searchTerm)),
       )
     }
 
-    // Apply product type filter
-    if (selectedFilters.productType.length > 0) {
-      result = result.filter((item) => selectedFilters.productType.includes(item.productType))
+    // Apply material filter
+    if (selectedFilters.material.length > 0) {
+      result = result.filter((item) => selectedFilters.material.includes(item.material))
     }
 
-    // Apply quality filter
-    if (selectedFilters.quality.length > 0) {
-      result = result.filter((item) => selectedFilters.quality.includes(item.quality))
+    // Apply flame/adhesive filter
+    if (selectedFilters.flameAdhesive.length > 0) {
+      result = result.filter((item) => selectedFilters.flameAdhesive.includes(item.flameAdhesive))
     }
 
     setFilteredData(result)
@@ -129,13 +126,12 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
 
   const formik = useFormik({
     initialValues: {
-      date: "",
-      productType: "",
-      quantity: "",
-      unit: "",
-      quality: "",
-      machineId: "",
-      supervisor: "",
+      material: "",
+      t1: "",
+      materialDescription: "",
+      flameAdhesive: "",
+      colorway: "",
+      width: "",
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
@@ -147,13 +143,12 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
   const handleOpenEditDialog = (item) => {
     setSelectedItem(item)
     formik.setValues({
-      date: item.date,
-      productType: item.productType,
-      quantity: item.quantity,
-      unit: item.unit,
-      quality: item.quality,
-      machineId: item.machineId,
-      supervisor: item.supervisor,
+      material: item.material || "",
+      t1: item.t1 || "",
+      materialDescription: item.materialDescription || "",
+      flameAdhesive: item.flameAdhesive || "",
+      colorway: item.colorway || "",
+      width: item.width || "",
     })
     setOpenEditDialog(true)
   }
@@ -222,25 +217,23 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
 
   const handleClearFilters = () => {
     setSelectedFilters({
-      productType: [],
-      quality: [],
+      material: [],
+      flameAdhesive: [],
     })
   }
 
-  const getQualityChipColor = (quality) => {
-    switch (quality) {
-      case "Premium":
-        return "success"
-      case "Standard":
+  const getFlameAdhesiveChipColor = (type) => {
+    switch (type) {
+      case "Flame":
+        return "error"
+      case "Adhesive":
         return "primary"
-      case "Economy":
-        return "default"
       default:
         return "default"
     }
   }
 
-  const isFiltersApplied = selectedFilters.productType.length > 0 || selectedFilters.quality.length > 0
+  const isFiltersApplied = selectedFilters.material.length > 0 || selectedFilters.flameAdhesive.length > 0
 
   return (
     // Modified container to ensure full width
@@ -248,25 +241,25 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
       <div className="table-toolbar">
         {/* Improved search field */}
         <TextField
-          placeholder="Search by product, machine ID, supervisor..."
+          placeholder="Search by material, description, colorway..."
           value={searchTerm}
           onChange={handleSearchChange}
           variant="outlined"
           size="small"
           fullWidth
           sx={{
-            '& .MuiInputBase-input': {
-              color: '#000', // user input text
-              '&::placeholder': {
-                color: '#888', // placeholder text
-                opacity: 1,    // override MUI default opacity
+            "& .MuiInputBase-input": {
+              color: "#000", // user input text
+              "&::placeholder": {
+                color: "#888", // placeholder text
+                opacity: 1, // override MUI default opacity
               },
             },
           }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon sx={{ color: '#888' }} />
+                <SearchIcon sx={{ color: "#888" }} />
               </InputAdornment>
             ),
             endAdornment: searchTerm && (
@@ -279,7 +272,6 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
           }}
         />
 
-
         {/* Filter button moved to right */}
         <Button
           startIcon={<FilterIcon />}
@@ -288,7 +280,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
           className={`filter-button ${isFiltersApplied ? "filter-active" : ""}`}
           onClick={handleFilterClick}
         >
-          Filter {isFiltersApplied && `(${selectedFilters.productType.length + selectedFilters.quality.length})`}
+          Filter {isFiltersApplied && `(${selectedFilters.material.length + selectedFilters.flameAdhesive.length})`}
         </Button>
 
         {/* Filter menu */}
@@ -310,34 +302,16 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
 
           <div className="filter-section">
             <Typography variant="body2" className="filter-section-title">
-              Product Type
+              Flame / Adhesive
             </Typography>
-            {productTypes.map((type) => (
+            {flameAdhesiveOptions.map((type) => (
               <div key={type} className="filter-option">
                 <Checkbox
-                  checked={selectedFilters.productType.includes(type)}
-                  onChange={() => handleFilterChange("productType", type)}
+                  checked={selectedFilters.flameAdhesive.includes(type)}
+                  onChange={() => handleFilterChange("flameAdhesive", type)}
                   size="small"
                 />
                 <ListItemText primary={type} />
-              </div>
-            ))}
-          </div>
-
-          <Divider />
-
-          <div className="filter-section">
-            <Typography variant="body2" className="filter-section-title">
-              Quality
-            </Typography>
-            {qualityLevels.map((quality) => (
-              <div key={quality} className="filter-option">
-                <Checkbox
-                  checked={selectedFilters.quality.includes(quality)}
-                  onChange={() => handleFilterChange("quality", quality)}
-                  size="small"
-                />
-                <ListItemText primary={quality} />
               </div>
             ))}
           </div>
@@ -359,21 +333,21 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
             Active Filters:
           </Typography>
           <div className="filter-chips">
-            {selectedFilters.productType.map((type) => (
+            {selectedFilters.material.map((type) => (
               <Chip
-                key={`type-${type}`}
-                label={`Type: ${type}`}
+                key={`material-${type}`}
+                label={`Material: ${type}`}
                 size="small"
-                onDelete={() => handleFilterChange("productType", type)}
+                onDelete={() => handleFilterChange("material", type)}
                 className="filter-chip"
               />
             ))}
-            {selectedFilters.quality.map((quality) => (
+            {selectedFilters.flameAdhesive.map((type) => (
               <Chip
-                key={`quality-${quality}`}
-                label={`Quality: ${quality}`}
+                key={`flame-adhesive-${type}`}
+                label={`Type: ${type}`}
                 size="small"
-                onDelete={() => handleFilterChange("quality", quality)}
+                onDelete={() => handleFilterChange("flameAdhesive", type)}
                 className="filter-chip"
               />
             ))}
@@ -386,12 +360,12 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
         <Table stickyHeader aria-label="production data table">
           <TableHead>
             <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Product Type</TableCell>
-              <TableCell>Quantity</TableCell>
-              <TableCell>Quality</TableCell>
-              <TableCell>Machine ID</TableCell>
-              <TableCell>Supervisor</TableCell>
+              <TableCell>Material</TableCell>
+              <TableCell>T1</TableCell>
+              <TableCell>Material Description</TableCell>
+              <TableCell>Flame / Adhesive</TableCell>
+              <TableCell>Colorway</TableCell>
+              <TableCell>Width</TableCell>
               <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -399,21 +373,19 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
             {filteredData.length > 0 ? (
               filteredData.map((row) => (
                 <StyledTableRow key={row.id} className="table-row">
-                  <TableCell>{row.date}</TableCell>
-                  <TableCell>{row.productType}</TableCell>
-                  <TableCell>
-                    {row.quantity} {row.unit}
-                  </TableCell>
+                  <TableCell>{row.material}</TableCell>
+                  <TableCell>{row.t1}</TableCell>
+                  <TableCell>{row.materialDescription}</TableCell>
                   <TableCell>
                     <Chip
-                      label={row.quality}
+                      label={row.flameAdhesive}
                       size="small"
-                      color={getQualityChipColor(row.quality)}
-                      className="quality-chip"
+                      color={getFlameAdhesiveChipColor(row.flameAdhesive)}
+                      className="flame-adhesive-chip"
                     />
                   </TableCell>
-                  <TableCell>{row.machineId}</TableCell>
-                  <TableCell>{row.supervisor}</TableCell>
+                  <TableCell>{row.colorway}</TableCell>
+                  <TableCell>{row.width}</TableCell>
                   <TableCell align="center" className="action-cell">
                     <Tooltip title="View Details">
                       <IconButton size="small" onClick={() => handleOpenViewDialog(row)} className="action-button view">
@@ -476,15 +448,53 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                 <TextField
                   fullWidth
                   margin="dense"
-                  id="date"
-                  name="date"
-                  label="Production Date"
-                  type="date"
-                  value={formik.values.date}
+                  id="material"
+                  name="material"
+                  label="Material"
+                  value={formik.values.material}
                   onChange={formik.handleChange}
-                  error={formik.touched.date && Boolean(formik.errors.date)}
-                  helperText={formik.touched.date && formik.errors.date}
-                  InputLabelProps={{ shrink: true }}
+                  error={formik.touched.material && Boolean(formik.errors.material)}
+                  helperText={formik.touched.material && formik.errors.material}
+                  className="form-field"
+                  sx={{
+                    input: { color: "#000" },
+                    label: { color: "#000" },
+                    "& .MuiFormHelperText-root": { color: "#d32f2f" },
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  margin="dense"
+                  id="t1"
+                  name="t1"
+                  label="T1"
+                  value={formik.values.t1}
+                  onChange={formik.handleChange}
+                  error={formik.touched.t1 && Boolean(formik.errors.t1)}
+                  helperText={formik.touched.t1 && formik.errors.t1}
+                  className="form-field"
+                  sx={{
+                    input: { color: "#000" },
+                    label: { color: "#000" },
+                    "& .MuiFormHelperText-root": { color: "#d32f2f" },
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  margin="dense"
+                  id="materialDescription"
+                  name="materialDescription"
+                  label="Material Description"
+                  value={formik.values.materialDescription}
+                  onChange={formik.handleChange}
+                  error={formik.touched.materialDescription && Boolean(formik.errors.materialDescription)}
+                  helperText={formik.touched.materialDescription && formik.errors.materialDescription}
                   className="form-field"
                   sx={{
                     input: { color: "#000" },
@@ -498,29 +508,30 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                 <FormControl
                   fullWidth
                   margin="dense"
-                  error={formik.touched.productType && Boolean(formik.errors.productType)}
+                  error={formik.touched.flameAdhesive && Boolean(formik.errors.flameAdhesive)}
                   className="form-field"
                 >
-                  <InputLabel id="edit-product-type-label" sx={{ color: "#000" }}>
-                    Product Type
+                  <InputLabel id="edit-flame-adhesive-label" sx={{ color: "#000" }}>
+                    Flame / Adhesive
                   </InputLabel>
                   <Select
-                    labelId="edit-product-type-label"
-                    id="productType"
-                    name="productType"
-                    value={formik.values.productType}
+                    labelId="edit-flame-adhesive-label"
+                    id="flameAdhesive"
+                    name="flameAdhesive"
+                    value={formik.values.flameAdhesive}
                     onChange={formik.handleChange}
-                    label="Product Type"
+                    label="Flame / Adhesive"
+                    sx={{ color: "#000" }}
                   >
-                    {productTypes.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
+                    {flameAdhesiveOptions.map((option) => (
+                      <MenuItem key={option} value={option}>
+                        {option}
                       </MenuItem>
                     ))}
                   </Select>
-                  {formik.touched.productType && formik.errors.productType && (
+                  {formik.touched.flameAdhesive && formik.errors.flameAdhesive && (
                     <Typography variant="caption" color="error">
-                      {formik.errors.productType}
+                      {formik.errors.flameAdhesive}
                     </Typography>
                   )}
                 </FormControl>
@@ -530,120 +541,34 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                 <TextField
                   fullWidth
                   margin="dense"
-                  id="quantity"
-                  name="quantity"
-                  label="Quantity"
+                  id="colorway"
+                  name="colorway"
+                  label="Colorway"
+                  value={formik.values.colorway}
+                  onChange={formik.handleChange}
+                  error={formik.touched.colorway && Boolean(formik.errors.colorway)}
+                  helperText={formik.touched.colorway && formik.errors.colorway}
+                  className="form-field"
+                  sx={{
+                    input: { color: "#000" },
+                    label: { color: "#000" },
+                    "& .MuiFormHelperText-root": { color: "#d32f2f" },
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  margin="dense"
+                  id="width"
+                  name="width"
+                  label="Width"
                   type="number"
-                  value={formik.values.quantity}
+                  value={formik.values.width}
                   onChange={formik.handleChange}
-                  error={formik.touched.quantity && Boolean(formik.errors.quantity)}
-                  helperText={formik.touched.quantity && formik.errors.quantity}
-                  className="form-field"
-                  sx={{
-                    input: { color: "#000" },
-                    label: { color: "#000" },
-                    "& .MuiFormHelperText-root": { color: "#d32f2f" },
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <FormControl
-                  fullWidth
-                  margin="dense"
-                  error={formik.touched.unit && Boolean(formik.errors.unit)}
-                  className="form-field"
-                >
-                  <InputLabel id="edit-unit-label" sx={{ color: "#000" }}>
-                    Unit
-                  </InputLabel>
-                  <Select
-                    labelId="edit-unit-label"
-                    id="unit"
-                    name="unit"
-                    value={formik.values.unit}
-                    onChange={formik.handleChange}
-                    label="Unit"
-                    sx={{ color: "#000" }}
-                  >
-                    {units.map((unit) => (
-                      <MenuItem key={unit} value={unit}>
-                        {unit}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {formik.touched.unit && formik.errors.unit && (
-                    <Typography variant="caption" color="error">
-                      {formik.errors.unit}
-                    </Typography>
-                  )}
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <FormControl
-                  fullWidth
-                  margin="dense"
-                  error={formik.touched.quality && Boolean(formik.errors.quality)}
-                  className="form-field"
-                >
-                  <InputLabel id="edit-quality-label" sx={{ color: "#000" }}>
-                    Quality
-                  </InputLabel>
-                  <Select
-                    labelId="edit-quality-label"
-                    id="quality"
-                    name="quality"
-                    value={formik.values.quality}
-                    onChange={formik.handleChange}
-                    label="Quality"
-                    sx={{ color: "#000" }}
-                  >
-                    {qualityLevels.map((quality) => (
-                      <MenuItem key={quality} value={quality}>
-                        {quality}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {formik.touched.quality && formik.errors.quality && (
-                    <Typography variant="caption" color="error">
-                      {formik.errors.quality}
-                    </Typography>
-                  )}
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  margin="dense"
-                  id="machineId"
-                  name="machineId"
-                  label="Machine ID"
-                  value={formik.values.machineId}
-                  onChange={formik.handleChange}
-                  error={formik.touched.machineId && Boolean(formik.errors.machineId)}
-                  helperText={formik.touched.machineId && formik.errors.machineId}
-                  className="form-field"
-                  sx={{
-                    input: { color: "#000" },
-                    label: { color: "#000" },
-                    "& .MuiFormHelperText-root": { color: "#d32f2f" },
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  margin="dense"
-                  id="supervisor"
-                  name="supervisor"
-                  label="Supervisor"
-                  value={formik.values.supervisor}
-                  onChange={formik.handleChange}
-                  error={formik.touched.supervisor && Boolean(formik.errors.supervisor)}
-                  helperText={formik.touched.supervisor && formik.errors.supervisor}
+                  error={formik.touched.width && Boolean(formik.errors.width)}
+                  helperText={formik.touched.width && formik.errors.width}
                   className="form-field"
                   sx={{
                     input: { color: "#000" },
@@ -686,58 +611,58 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
             <Grid container spacing={3} className="detail-grid">
               <Grid item xs={12} md={6} className="detail-item">
                 <Typography variant="subtitle2" className="detail-label">
-                  Date
+                  Material
                 </Typography>
                 <Typography variant="body1" className="detail-value highlight-value">
-                  {selectedItem.date}
+                  {selectedItem.material}
                 </Typography>
               </Grid>
 
               <Grid item xs={12} md={6} className="detail-item">
                 <Typography variant="subtitle2" className="detail-label">
-                  Product Type
+                  T1
                 </Typography>
                 <Typography variant="body1" className="detail-value highlight-value">
-                  {selectedItem.productType}
+                  {selectedItem.t1}
                 </Typography>
               </Grid>
 
               <Grid item xs={12} md={6} className="detail-item">
                 <Typography variant="subtitle2" className="detail-label">
-                  Quantity
+                  Material Description
                 </Typography>
                 <Typography variant="body1" className="detail-value highlight-value">
-                  {selectedItem.quantity} {selectedItem.unit}
+                  {selectedItem.materialDescription}
                 </Typography>
               </Grid>
 
               <Grid item xs={12} md={6} className="detail-item">
                 <Typography variant="subtitle2" className="detail-label">
-                  Quality
+                  Flame / Adhesive
                 </Typography>
                 <Chip
-                  label={selectedItem.quality}
+                  label={selectedItem.flameAdhesive}
                   size="small"
-                  color={getQualityChipColor(selectedItem.quality)}
-                  className="quality-chip detail-chip"
+                  color={getFlameAdhesiveChipColor(selectedItem.flameAdhesive)}
+                  className="flame-adhesive-chip detail-chip"
                 />
               </Grid>
 
               <Grid item xs={12} md={6} className="detail-item">
                 <Typography variant="subtitle2" className="detail-label">
-                  Machine ID
+                  Colorway
                 </Typography>
                 <Typography variant="body1" className="detail-value highlight-value">
-                  {selectedItem.machineId}
+                  {selectedItem.colorway}
                 </Typography>
               </Grid>
 
               <Grid item xs={12} md={6} className="detail-item">
                 <Typography variant="subtitle2" className="detail-label">
-                  Supervisor
+                  Width
                 </Typography>
                 <Typography variant="body1" className="detail-value highlight-value">
-                  {selectedItem.supervisor}
+                  {selectedItem.width}
                 </Typography>
               </Grid>
             </Grid>

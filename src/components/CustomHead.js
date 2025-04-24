@@ -26,7 +26,7 @@ const CustomHead = ({ title, description, image, video, isVideo, url }) => {
       <meta
         name="keywords"
         content={
-          " Direct Strategy,Intra Strategy,Triangular Strategy,Coin, Exchange, Kraken, Binance, Mexc, Gemini, TradingView chart, ETH, BTC, USDT, Sniper Trade, Smart Limit Orders, Auto Trade, Bot, Direct Strategy, Intra Strategy, Triangular Strategy"
+          "Jasmin Knitting Pvt Ltd"
         }
       />
     </Head>

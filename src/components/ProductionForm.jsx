@@ -1,16 +1,8 @@
 "use client"
-import {
-  TextField,
-  Button,
-  Grid,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  FormHelperText,
-} from "@mui/material"
+import { TextField, Button, Grid, MenuItem, FormControl, InputLabel, Select, FormHelperText } from "@mui/material"
 import { useFormik } from "formik"
 import * as yup from "yup"
+
 
 const validationSchema = yup.object({
   material: yup.string().required("Material is required"),
@@ -52,7 +44,11 @@ const ProductionForm = ({ onSubmit }) => {
               onChange={formik.handleChange}
               error={formik.touched.material && Boolean(formik.errors.material)}
               helperText={formik.touched.material && formik.errors.material}
-              className="form-field"
+              sx={{
+                '& .MuiInputBase-input': {
+                  color: 'black !important'
+                }
+              }}
             />
           </Grid>
 
@@ -66,10 +62,13 @@ const ProductionForm = ({ onSubmit }) => {
               onChange={formik.handleChange}
               error={formik.touched.t1 && Boolean(formik.errors.t1)}
               helperText={formik.touched.t1 && formik.errors.t1}
-              className="form-field"
+              sx={{
+                '& .MuiInputBase-input': {
+                  color: 'black'
+                }
+              }}
             />
           </Grid>
-
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
@@ -104,12 +103,11 @@ const ProductionForm = ({ onSubmit }) => {
                     paddingLeft: "12px",
                     textAlign: "left",
                     color: "#000000",
-                  },   
+                  },
                   '@media (max-width: 320px)': {
                     width: '224px',
                   }
                 }}
-                
               >
                 <MenuItem value="Flame">Flame</MenuItem>
                 <MenuItem value="Adhesive">Adhesive</MenuItem>
@@ -151,6 +149,7 @@ const ProductionForm = ({ onSubmit }) => {
             <Button
               type="submit"
               variant="contained"
+              color="primary"
               className="submit-button"
             >
               Add Production Record

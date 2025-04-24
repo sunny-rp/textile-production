@@ -49,38 +49,37 @@ const Dashboard = () => {
   const [showAddForm, setShowAddForm] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  // Updated initial data to match the new form fields
   const initialData = [
     {
       id: 1,
-      date: "2023-06-15",
-      productType: "Cotton Fabric",
-      quantity: 500,
-      unit: "meters",
-      quality: "Premium",
-      machineId: "M001",
-      supervisor: "John Doe",
+      material: "Cotton",
+      t1: "T1-001",
+      materialDescription: "Premium cotton fabric",
+      flameAdhesive: "Flame",
+      colorway: "Blue",
+      width: 150,
     },
     {
       id: 2,
-      date: "2023-06-16",
-      productType: "Polyester Blend",
-      quantity: 750,
-      unit: "meters",
-      quality: "Standard",
-      machineId: "M002",
-      supervisor: "Jane Smith",
+      material: "Polyester",
+      t1: "T1-002",
+      materialDescription: "Standard polyester blend",
+      flameAdhesive: "Adhesive",
+      colorway: "Red",
+      width: 120,
     },
     {
       id: 3,
-      date: "2023-06-17",
-      productType: "Silk",
-      quantity: 200,
-      unit: "meters",
-      quality: "Premium",
-      machineId: "M003",
-      supervisor: "Robert Johnson",
+      material: "Silk",
+      t1: "T1-003",
+      materialDescription: "Luxury silk material",
+      flameAdhesive: "Flame",
+      colorway: "Gold",
+      width: 100,
     },
   ]
+  
 
   useEffect(() => {
     // Set default mock data for direct access without login
@@ -173,11 +172,6 @@ const Dashboard = () => {
     router.push("/")
   }
 
-  // Calculate summary statistics
-  const totalProduction = productionData.reduce((sum, item) => sum + item.quantity, 0)
-  const premiumCount = productionData.filter((item) => item.quality === "Premium").length
-  const standardCount = productionData.filter((item) => item.quality === "Standard").length
-  const economyCount = productionData.filter((item) => item.quality === "Economy").length
 
   if (isLoading) {
     return (
@@ -187,19 +181,17 @@ const Dashboard = () => {
     )
   }
 
-  const menuItems = [
-    { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-    { text: "Reports", icon: <AssessmentIcon />, path: "/dashboard/reports" },
-    { text: "Settings", icon: <SettingsIcon />, path: "/dashboard/settings" },
-  ]
-
   return (
     <Box className="dashboard-root">
       {/* Sidebar Drawer */}
       <Drawer
-        variant="persistent"
+        variant="temporary" // changed from 'persistent'
         anchor="left"
         open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)} // add this to handle outside clicks
+        ModalProps={{
+          keepMounted: true, // Improves performance on mobile
+        }}
         sx={{
           width: drawerWidth,
           flexShrink: 0,
@@ -216,6 +208,7 @@ const Dashboard = () => {
         }}
         className="sidebar-drawer"
       >
+
         <Box className="sidebar-header">
           <Typography variant="h6" color="primary" fontWeight={600} className="sidebar-title" mt={3} ml={3}>
             Jasmine Knitting Industries
@@ -228,7 +221,7 @@ const Dashboard = () => {
         <Divider />
 
         <Box className="sidebar-content" sx={{ flex: 1, overflowY: "auto", p: 2 }}>
-          <Stack spacing={1} className="sidebar-menu">
+          {/* <Stack spacing={1} className="sidebar-menu">
             {menuItems.map((item) => (
               <Button
                 key={item.text}
@@ -246,7 +239,7 @@ const Dashboard = () => {
               >
                 {item.text}
               </Button>
-            ))}
+            ))} */}
 
             {isAdmin && (
               <Button
@@ -270,7 +263,7 @@ const Dashboard = () => {
                 Add Production
               </Button>
             )}
-          </Stack>
+          
         </Box>
 
         <Box className="sidebar-footer" sx={{ p: 2, borderTop: "1px solid #e0e0e0", mt: "auto" }}>
@@ -355,187 +348,6 @@ const Dashboard = () => {
             </Box>
           </Box>
 
-          {/* Statistics Cards - Only for Admin */}
-          {/* {isAdmin && (
-            <Grid container spacing={3} className="stats-container" sx={{ mb: 4, width: "100%" }}>
-              <Grid item xs={12} sm={6} md={3}>
-                <Card className="stat-card" sx={{ boxShadow: "0 4px 12px rgba(0,0,0,0.1)", borderRadius: "12px" }}>
-                  <CardContent>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                      <Typography variant="subtitle2" className="stat-title" color="textSecondary">
-                        Total Production
-                      </Typography>
-                      <Box
-                        sx={{
-                          backgroundColor: "rgba(39, 82, 231, 0.1)",
-                          borderRadius: "50%",
-                          width: 40,
-                          height: 40,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Inventory sx={{ color: "#2752e7" }} />
-                      </Box>
-                    </Box>
-                    <Typography variant="h4" className="stat-value" fontWeight={600}>
-                      {totalProduction}
-                    </Typography>
-                    <Typography variant="body2" className="stat-unit" color="textSecondary">
-                      meters
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        mt: 1,
-                        color: "#4caf50",
-                      }}
-                    >
-                      <TrendingUp fontSize="small" />
-                      <Typography variant="caption" sx={{ ml: 0.5 }}>
-                        12% increase from last week
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item xs={12} sm={6} md={3}>
-                <Card className="stat-card" sx={{ boxShadow: "0 4px 12px rgba(0,0,0,0.1)", borderRadius: "12px" }}>
-                  <CardContent>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                      <Typography variant="subtitle2" className="stat-title" color="textSecondary">
-                        Premium Quality
-                      </Typography>
-                      <Box
-                        sx={{
-                          backgroundColor: "rgba(76, 175, 80, 0.1)",
-                          borderRadius: "50%",
-                          width: 40,
-                          height: 40,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <TrendingUp sx={{ color: "#4caf50" }} />
-                      </Box>
-                    </Box>
-                    <Typography variant="h4" className="stat-value" fontWeight={600}>
-                      {premiumCount}
-                    </Typography>
-                    <Typography variant="body2" className="stat-unit" color="textSecondary">
-                      products
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        mt: 1,
-                        color: "#4caf50",
-                      }}
-                    >
-                      <TrendingUp fontSize="small" />
-                      <Typography variant="caption" sx={{ ml: 0.5 }}>
-                        8% increase from last week
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item xs={12} sm={6} md={3}>
-                <Card className="stat-card" sx={{ boxShadow: "0 4px 12px rgba(0,0,0,0.1)", borderRadius: "12px" }}>
-                  <CardContent>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                      <Typography variant="subtitle2" className="stat-title" color="textSecondary">
-                        Standard Quality
-                      </Typography>
-                      <Box
-                        sx={{
-                          backgroundColor: "rgba(33, 150, 243, 0.1)",
-                          borderRadius: "50%",
-                          width: 40,
-                          height: 40,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <TrendingUp sx={{ color: "#2196f3" }} />
-                      </Box>
-                    </Box>
-                    <Typography variant="h4" className="stat-value" fontWeight={600}>
-                      {standardCount}
-                    </Typography>
-                    <Typography variant="body2" className="stat-unit" color="textSecondary">
-                      products
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        mt: 1,
-                        color: "#4caf50",
-                      }}
-                    >
-                      <TrendingUp fontSize="small" />
-                      <Typography variant="caption" sx={{ ml: 0.5 }}>
-                        5% increase from last week
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              <Grid item xs={12} sm={6} md={3}>
-                <Card className="stat-card" sx={{ boxShadow: "0 4px 12px rgba(0,0,0,0.1)", borderRadius: "12px" }}>
-                  <CardContent>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                      <Typography variant="subtitle2" className="stat-title" color="textSecondary">
-                        Active Supervisors
-                      </Typography>
-                      <Box
-                        sx={{
-                          backgroundColor: "rgba(156, 39, 176, 0.1)",
-                          borderRadius: "50%",
-                          width: 40,
-                          height: 40,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <People sx={{ color: "#9c27b0" }} />
-                      </Box>
-                    </Box>
-                    <Typography variant="h4" className="stat-value" fontWeight={600}>
-                      {new Set(productionData.map((item) => item.supervisor)).size}
-                    </Typography>
-                    <Typography variant="body2" className="stat-unit" color="textSecondary">
-                      people
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        mt: 1,
-                        color: "#f44336",
-                      }}
-                    >
-                      <TrendingDown fontSize="small" />
-                      <Typography variant="caption" sx={{ ml: 0.5 }}>
-                        2% decrease from last week
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
-          )} */}
-
           {/* Main Content Grid */}
           <Grid container spacing={3} sx={{ width: "100%" }}>
             {/* Production Form - Only for Admin */}
@@ -569,7 +381,7 @@ const Dashboard = () => {
             )}
 
             {/* Production Table */}
-            <Grid item xs={12} md={isAdmin && showAddForm ? 6 : 12}>
+            <Grid item xs={12} md={isAdmin && showAddForm ? 6 : 12} sx={{width: "100%"}}>
               <Paper
                 className="table-paper"
                 sx={{
@@ -582,7 +394,7 @@ const Dashboard = () => {
                   Production Records
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
-                <ProductionTable
+                <ProductionTable 
                   data={productionData}
                   isAdmin={isAdmin}
                   onUpdate={isAdmin ? handleUpdateProduction : undefined}
@@ -596,6 +408,7 @@ const Dashboard = () => {
     </Box>
   )
 }
+
 
 Dashboard.getLayout = function getLayout(page) {
   return page

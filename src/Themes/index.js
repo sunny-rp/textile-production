@@ -254,20 +254,20 @@ const baseOptions = {
         },
         input: {
           color: "#000",
-          padding: "16px",
+          padding: "6px",
           fontSize: "16px",
           fontWeight: "400",
           background: "transparent !important",
-          "&:-webkit-autofill": {
-            "-webkit-background-clip": "text !important",
-            // transitionDelay: "9999s",
-            "caret-color": "transparent",
-            "-webkit-box-shadow": "0 0 0 100px transparent inset",
-            "-webkit-text-fill-color": "#fff",
-          },
-          "&:-internal-autofill-selected": {
-            color: "#000",
-          },
+          // "&:-webkit-autofill": {
+          //   "-webkit-background-clip": "text !important",
+          //   // transitionDelay: "9999s",
+          //   "caret-color": "transparent",
+          //   "-webkit-box-shadow": "0 0 0 100px transparent inset",
+          //   "-webkit-text-fill-color": "#fff",
+          // },
+          // "&:-internal-autofill-selected": {
+          //   color: "#000",
+          // },
         },
       },
     },
@@ -579,7 +579,7 @@ const baseOptions = {
           border: "1px solid #2752E7",
           "&:hover": {
             border: "1px solid #2752E7",
-            color: "#2752E7",
+            color: "#000",
             background: "#FFFFFF",
           },
 

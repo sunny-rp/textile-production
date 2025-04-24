@@ -257,7 +257,7 @@ export default function Login() {
                 <Typography
                   variant="body1"
                   color="primary"
-                  sx={{
+                  sx={{  
                     textAlign: "center",
                     cursor: "pointer",
                     textDecoration: "underline",

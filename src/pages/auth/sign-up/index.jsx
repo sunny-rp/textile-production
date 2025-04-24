@@ -9,6 +9,7 @@ import {
   FormHelperText,
   Checkbox,
   Grid,
+  MenuItem,
 } from "@mui/material"
 import { useState } from "react"
 import { HiEye, HiEyeOff } from "react-icons/hi"
@@ -71,22 +72,17 @@ export default function Signup() {
       .email("Please enter valid email.")
       .max(56, "Email should not exceed 56 characters.")
       .required("Email is required."),
-
+    accountType: yup.string().required("Account type is required."),
     password: yup
       .string()
       .required("Password is required.")
       .max(16, "Password should not exceed 16 characters.")
       .min(8, "Password must be a minimum of 8 characters.")
-      .matches(
-        /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/,
-        "Please enter a valid password."
-      ),
-
+      .matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/, "Please enter a valid password."),
     confirmPassword: yup
       .string()
       .required("Confirm password is required.")
       .oneOf([yup.ref("password"), null], "Confirm password doesn't match."),
-
     fullName: yup
       .string("Please enter valid full name.")
       .required("Full name is required.")
@@ -99,6 +95,7 @@ export default function Signup() {
     initialValues: {
       fullName: "",
       email: "",
+      accountType: "",
       password: "",
       confirmPassword: "",
     },
@@ -114,11 +111,11 @@ export default function Signup() {
         const bodyData = {
           email: values.email.toLowerCase(),
           password: values.password,
-          firstName: firstName,
+          firstName,
           lastName: lastName || "",
+          accountType: values.accountType,
         }
 
-        // Mock response - replace with real API call
         const response = {
           data: {
             responseCode: 200,
@@ -222,6 +219,40 @@ export default function Signup() {
                     <FormHelperText error>{formik.touched.email && formik.errors.email}</FormHelperText>
                   </Box>
 
+                  {/* Account Type Field */}
+                  <Box mt={3}>
+                    <TextField
+                      fullWidth
+                      select
+                      variant="standard"
+                      name="accountType"
+                      value={formik.values.accountType}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      error={formik.touched.accountType && Boolean(formik.errors.accountType)}
+                      helperText={formik.touched.accountType && formik.errors.accountType}
+                      SelectProps={{
+                        displayEmpty: true,
+                      }}
+                      inputProps={{
+                        style: { textAlign: "center" },
+                      }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <FiUser />
+                          </InputAdornment>
+                        ),
+                      }}
+                    >
+                      <MenuItem value="" disabled>
+                        Select Account Type
+                      </MenuItem>
+                      <MenuItem value="Admin">Admin</MenuItem>
+                      <MenuItem value="User">User</MenuItem>
+                    </TextField>
+                  </Box>
+
                   <Box mt={3}>
                     <TextField
                       fullWidth
@@ -246,8 +277,7 @@ export default function Signup() {
                         endAdornment: (
                           <InputAdornment position="end">
                             <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                            {showPassword ? <HiEye style={{ color: "#000" }} /> : <HiEyeOff style={{ color: "#000" }} />}
-
+                              {showPassword ? <HiEye style={{ color: "#000" }} /> : <HiEyeOff style={{ color: "#000" }} />}
                             </IconButton>
                           </InputAdornment>
                         ),
@@ -282,7 +312,7 @@ export default function Signup() {
                         endAdornment: (
                           <InputAdornment position="end">
                             <IconButton onClick={() => setShowPassword1(!showPassword1)} edge="end">
-                            {showPassword1 ? <HiEye style={{ color: "#000" }} /> : <HiEyeOff style={{ color: "#000" }} />}
+                              {showPassword1 ? <HiEye style={{ color: "#000" }} /> : <HiEyeOff style={{ color: "#000" }} />}
                             </IconButton>
                           </InputAdornment>
                         ),

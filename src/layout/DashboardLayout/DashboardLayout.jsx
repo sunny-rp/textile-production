@@ -106,13 +106,13 @@ const DashboardLayout = ({ children }) => {
     router.push("/auth/login")
   }
 
-  const menuItems = [
-    { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-    { text: "Production", icon: <InventoryIcon />, path: "/dashboard/production" },
-    { text: "Reports", icon: <AssessmentIcon />, path: "/dashboard/reports" },
-    { text: "Team", icon: <PeopleIcon />, path: "/dashboard/team" },
-    { text: "Settings", icon: <SettingsIcon />, path: "/dashboard/settings" },
-  ]
+  // const menuItems = [
+  //   { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
+  //   { text: "Production", icon: <InventoryIcon />, path: "/dashboard/production" },
+  //   { text: "Reports", icon: <AssessmentIcon />, path: "/dashboard/reports" },
+  //   { text: "Team", icon: <PeopleIcon />, path: "/dashboard/team" },
+  //   { text: "Settings", icon: <SettingsIcon />, path: "/dashboard/settings" },
+  // ]
 
   const drawer = (
     <div className="sidebar-container">
