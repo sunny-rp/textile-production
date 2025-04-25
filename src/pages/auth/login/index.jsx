@@ -139,7 +139,7 @@ export default function Login() {
           <Typography variant="h1" color="primary" className="loginText">
             Login
           </Typography>
-          <Typography variant="body1" color="#000000CC" mt={2}>
+          {/* <Typography variant="body1" color="#000000CC" mt={2}>
             Don't have an account?{" "}
             <span
               style={{ color: "#2752E7", fontWeight: 600, cursor: "pointer" }}
@@ -147,7 +147,7 @@ export default function Login() {
             >
               Sign Up
             </span>
-          </Typography>
+          </Typography> */}
         </Box>
 
         <Formik

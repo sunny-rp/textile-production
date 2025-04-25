@@ -17,6 +17,10 @@ import {
   Drawer,
   Stack,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material"
 import {
   TrendingUp,
@@ -48,6 +52,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
   // Updated initial data to match the new form fields
   const initialData = [
@@ -79,7 +84,7 @@ const Dashboard = () => {
       width: 100,
     },
   ]
-  
+
 
   useEffect(() => {
     // Set default mock data for direct access without login
@@ -137,6 +142,16 @@ const Dashboard = () => {
     setIsLoading(false)
     */
   }, [])
+
+  const cancelLogout = () => {
+    setLogoutDialogOpen(false)
+  }
+
+  const confirmLogout = () => {
+    toast.success("Logged out successfully")
+    router.push("/")
+  }
+
 
   const handleAddProduction = (newProduction) => {
     const newEntry = {
@@ -241,29 +256,51 @@ const Dashboard = () => {
               </Button>
             ))} */}
 
-            {isAdmin && (
-              <Button
-                startIcon={<AddIcon />}
-                variant="contained"
-                color="primary"
-                fullWidth
-                sx={{
-                  justifyContent: "flex-start",
-                  padding: "10px 16px",
-                  borderRadius: "8px",
-                  margin: "4px 0",
-                  textTransform: "none",
-                  mt: 2,
-                }}
-                onClick={() => {
-                  setShowAddForm(true)
-                  setSidebarOpen(false)
-                }}
-              >
-                Add Production
-              </Button>
-            )}
-          
+          {isAdmin && (
+            <Button
+              startIcon={<AddIcon />}
+              variant="contained"
+              color="primary"
+              fullWidth
+              sx={{
+                justifyContent: "flex-start",
+                padding: "10px 16px",
+                borderRadius: "8px",
+                margin: "4px 0",
+                textTransform: "none",
+                mt: 2,
+              }}
+              onClick={() => {
+                setShowAddForm(true)
+                setSidebarOpen(false)
+              }}
+            >
+              Add Production
+            </Button>
+          )}
+
+          <Button
+            startIcon={<People />}
+            variant="outlined"
+            fullWidth
+            sx={{
+              justifyContent: "flex-start",
+              padding: "10px 16px",
+              borderRadius: "8px",
+              margin: "4px 0",
+              textTransform: "none",
+              mt: 1,
+              color: '#d32f2f',
+              borderColor: '#d32f2f',
+
+            }}
+            onClick={() => router.push("/auth/sign-up")}
+          >
+            Create Account
+          </Button>
+
+
+
         </Box>
 
         <Box className="sidebar-footer" sx={{ p: 2, borderTop: "1px solid #e0e0e0", mt: "auto" }}>
@@ -278,10 +315,11 @@ const Dashboard = () => {
               borderRadius: "8px",
               textTransform: "none",
             }}
-            onClick={handleLogout}
+            onClick={() => setLogoutDialogOpen(true)} 
           >
             Logout
           </Button>
+
         </Box>
       </Drawer>
 
@@ -381,7 +419,7 @@ const Dashboard = () => {
             )}
 
             {/* Production Table */}
-            <Grid item xs={12} md={isAdmin && showAddForm ? 6 : 12} sx={{width: "100%"}}>
+            <Grid item xs={12} md={isAdmin && showAddForm ? 6 : 12} sx={{ width: "100%" }}>
               <Paper
                 className="table-paper"
                 sx={{
@@ -394,7 +432,7 @@ const Dashboard = () => {
                   Production Records
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
-                <ProductionTable 
+                <ProductionTable
                   data={productionData}
                   isAdmin={isAdmin}
                   onUpdate={isAdmin ? handleUpdateProduction : undefined}
@@ -405,6 +443,28 @@ const Dashboard = () => {
           </Grid>
         </Box>
       </Box>
+      <Dialog
+      className="logout-dialog"
+        open={logoutDialogOpen}
+        onClose={cancelLogout}
+        aria-labelledby="logout-dialog-title"
+        aria-describedby="logout-dialog-description"
+      >
+        <Box className="content-ask">
+        <DialogTitle id="logout-dialog-title">Confirm Logout</DialogTitle>
+        <DialogContent dividers>
+          <Typography id="logout-dialog-description">Are you sure you want to log out?</Typography>
+        </DialogContent>
+        </Box>
+        <DialogActions >
+          <Button onClick={cancelLogout} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={confirmLogout} color="error" variant="contained">
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }

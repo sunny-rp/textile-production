@@ -46,8 +46,28 @@ const ProductionForm = ({ onSubmit }) => {
               helperText={formik.touched.material && formik.errors.material}
               sx={{
                 '& .MuiInputBase-input': {
-                  color: 'black !important'
-                }
+                  color: 'black', 
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#808080', // Placeholder/label
+                },
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#2752e7', // Normal border
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#2752e7', // Hover border
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#2752e7', // Focused border
+                  },
+                  '&.Mui-error fieldset': {
+                    borderColor: '#2752e7', // Error border (override default red)
+                  },
+                },
+                '& .MuiFormHelperText-root': {
+                  color: '#d32f2f', // Keep error text red
+                },
               }}
             />
           </Grid>
@@ -64,10 +84,31 @@ const ProductionForm = ({ onSubmit }) => {
               helperText={formik.touched.t1 && formik.errors.t1}
               sx={{
                 '& .MuiInputBase-input': {
-                  color: 'black'
-                }
+                  color: 'black', // Input value
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#808080', // Placeholder/label
+                },
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#2752e7', // Normal border
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#2752e7', // Hover border
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#2752e7', // Focused border
+                  },
+                  '&.Mui-error fieldset': {
+                    borderColor: '#2752e7', // Error border
+                  },
+                },
+                '& .MuiFormHelperText-root': {
+                  color: '#d32f2f', // Keep error text red
+                },
               }}
             />
+
           </Grid>
           <Grid item xs={12} md={4}>
             <TextField

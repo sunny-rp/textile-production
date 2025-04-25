@@ -7,51 +7,12 @@ body {
   color: #000 !important;
 }
 
-.tab1 {
-  position: relative;
-}
-
 .MuiAccordionSummary-content.Mui-expanded {
   margin: 0px 0 !important;
 }
 
-.MuiAccordionDetails-root {
-  padding: 22px 0px 0px !important;
-  margin-top: -40px;
-}
-
 .MuiAccordionSummary-root.Mui-expanded {
   min-height: auto;
-}
-
-.disconnectButton {
-  background: linear-gradient(180deg, #ed0148 0%, #8c1237 100%) !important;
-  color: #ffffff !important;
-  box-shadow: 0px -1px 2px 5px #3c252c !important;
-  /* border: 3px solid; */
-  padding: 10px 30px !important;
-  border-image-source: linear-gradient(180deg, rgba(15, 81, 67, 0.6) 0%, rgba(70, 16, 32, 0.6) 100%);
-}
-
-.mainLayout {
-  background: #020202;
-  position: relative;
-  overflow: hidden;
-}
-
-.paperContainerDashboard {
-  min-height: 206px;
-}
-
-.tab1::before {
-  top: 0px;
-  left: -4px;
-  width: 4px;
-  height: 100%;
-  z-index: 0;
-  content: "";
-  position: absolute;
-  background-color: #c8c8ca;
 }
 
 .tab1 button {
@@ -76,35 +37,6 @@ body {
   z-index: 9;
 }
 
-.tab1-content {
-  padding: 20px;
-  border: 1px solid #ddd;
-}
-
-.outfitbottomtext {
-  margin-top: 227px;
-  position: relative;
-  position: relative;
-}
-.outfitbottomtext .topborderImg {
-  position: absolute;
-  top: -34%;
-}
-.outfitbottomtext h6 {
-  font-weight: 600;
-  font-weight: 600;
-  font-size: 14px;
-}
-.outfitbottomtext p {
-  margin-top: 10px;
-  color: rgba(22, 30, 41, 0.6);
-}
-
-.automatedSection {
-  padding: 84px 0 50px;
-  position: relative;
-}
-
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -121,25 +53,6 @@ input[type=number]::-webkit-outer-spin-button {
   -moz-appearance: none;
   appearance: none;
   margin: 0;
-}
-
-.gradientborder {
-  background-image: url(/images/borderImage.png);
-  /* background-position: top; */
-  background-size: contain;
-  background-repeat: round;
-}
-
-.clientBox {
-  border: 1px solid rgba(255, 255, 255, 0);
-  background: linear-gradient(94deg, #8dffa6 6.46%, #bfff4d 97.99%);
-  padding: 10px;
-  transform: rotate(5deg);
-  width: calc(100% - 15px);
-}
-.clientBox img {
-  width: auto;
-  max-width: 60px;
 }
 
 .bannerlanding .bannerrightimg {
@@ -1842,7 +1755,8 @@ figure {
   margin-right: auto;
 }
 .production-form .submit-button:hover {
-  background-color: #163dc5;
+  background-color: #fff;
+  color: #000;
 }
 
 .dialog-title {
@@ -2497,6 +2411,55 @@ figure {
 .form-paper,
 .table-paper {
   padding: 1rem;
+}
+
+.logout-dialog .MuiPaper-root {
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  min-width: 400px;
+  max-width: 600px;
+  width: 100%;
+}
+@media (max-width: 600px) {
+  .logout-dialog .MuiPaper-root {
+    margin: 16px;
+    min-width: unset;
+  }
+}
+.logout-dialog .MuiDialogTitle-root {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+  padding-bottom: 8px;
+}
+.logout-dialog .MuiDialogContent-root {
+  font-size: 1rem;
+  color: #555;
+}
+.logout-dialog .MuiDialogActions-root {
+  padding: 16px 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.logout-dialog .MuiDialogActions-root .MuiButton-root {
+  min-width: 80px;
+  text-transform: none;
+  font-weight: 500;
+}
+.logout-dialog .MuiDialogActions-root .MuiButton-containedError {
+  background-color: #d32f2f;
+}
+.logout-dialog .MuiDialogActions-root .MuiButton-containedError:hover {
+  background-color: #b71c1c;
+}
+
+.content-ask {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 1440px) {

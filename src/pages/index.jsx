@@ -18,7 +18,7 @@ export default function LoginPage() {
       />
 
 <Box>
-        <Box className="bannerlanding">
+        <Box>
           <Login />
         </Box>
       </Box>
