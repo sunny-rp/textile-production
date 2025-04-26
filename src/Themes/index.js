@@ -86,9 +86,6 @@ const baseOptions = {
         root: {
           color: "#000",
         },
-        // select: {
-        //   padding: "0px 10px !important",
-        // },
       },
     },
     MuiSelect: {
