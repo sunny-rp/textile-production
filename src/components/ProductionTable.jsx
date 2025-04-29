@@ -43,6 +43,8 @@ import {
 import { useFormik } from "formik"
 import * as yup from "yup"
 import styled from "@emotion/styled"
+import * as XLSX from "xlsx"
+import { saveAs } from "file-saver"
 
 // Enhanced table container styling for better full-width display
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
@@ -234,7 +236,31 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
   }
 
   const isFiltersApplied = selectedFilters.material.length > 0 || selectedFilters.flameAdhesive.length > 0
+  const handleExportToExcel = () => {
+    if (filteredData.length === 0) {
+      alert("No data to export.")
+      return
+    }
 
+    // Map your data into a simple array of objects
+    const exportData = filteredData.map((row) => ({
+      Material: row.material,
+      T1: row.t1,
+      "Material Description": row.materialDescription,
+      "Flame / Adhesive": row.flameAdhesive,
+      Colorway: row.colorway,
+      Width: row.width,
+    }))
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Production Data")
+
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" })
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" })
+
+    saveAs(data, `Production_Data_${new Date().toISOString().slice(0, 10)}.xlsx`)
+  }
   return (
     // Modified container to ensure full width
     <Box sx={{ width: "100%", maxWidth: "100%" }} className="production-table-container">
@@ -272,61 +298,20 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
           }}
         />
 
-        {/* Filter button moved to right */}
         <Button
-          startIcon={<FilterIcon />}
-          variant="outlined"
+          variant="contained"
+          color="primary"
           size="small"
-          className={`filter-button ${isFiltersApplied ? "filter-active" : ""}`}
-          onClick={handleFilterClick}
+          onClick={handleExportToExcel}
+          style={{ marginLeft: "10px", height: "40px" }}
         >
-          Filter {isFiltersApplied && `(${selectedFilters.material.length + selectedFilters.flameAdhesive.length})`}
+          Export
         </Button>
-
-        {/* Filter menu */}
-        <Menu
-          anchorEl={filterAnchorEl}
-          open={Boolean(filterAnchorEl)}
-          onClose={handleFilterClose}
-          className="filter-menu"
-        >
-          <div className="filter-menu-header">
-            <Typography variant="subtitle2">Filter Records</Typography>
-            {isFiltersApplied && (
-              <Button size="small" onClick={handleClearFilters} className="clear-filters-btn">
-                Clear All
-              </Button>
-            )}
-          </div>
           <Divider />
-
-          <div className="filter-section">
-            <Typography variant="body2" className="filter-section-title">
-              Flame / Adhesive
-            </Typography>
-            {flameAdhesiveOptions.map((type) => (
-              <div key={type} className="filter-option">
-                <Checkbox
-                  checked={selectedFilters.flameAdhesive.includes(type)}
-                  onChange={() => handleFilterChange("flameAdhesive", type)}
-                  size="small"
-                />
-                <ListItemText primary={type} />
-              </div>
-            ))}
-          </div>
-
           <Divider />
-
-          <div className="filter-menu-footer">
-            <Button variant="contained" color="primary" onClick={handleFilterClose} fullWidth>
-              Apply Filters
-            </Button>
-          </div>
-        </Menu>
       </div>
 
-      {/* Display active filters */}
+      {/* Display active filters
       {isFiltersApplied && (
         <div className="active-filters">
           <Typography variant="body2" className="active-filters-title">
@@ -353,7 +338,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
             ))}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Modified table container to ensure full width */}
       <StyledTableContainer component={Paper} className="table-wrapper">

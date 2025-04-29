@@ -1,4 +1,3 @@
-"use client"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
@@ -38,10 +37,11 @@ import {
 import toast from "react-hot-toast"
 import ProductionForm from "../../components/ProductionForm"
 import ProductionTable from "../../components/ProductionTable"
+import nookies from "nookies";
+import { withAuth } from "@/utils/withAuth"
 
 
 // List of admin emails for role-based access control
-const ADMIN_EMAILS = ["admin@textile.com", "manager@textile.com", "supervisor@textile.com"]
 const drawerWidth = 260
 
 const Dashboard = () => {
@@ -53,6 +53,14 @@ const Dashboard = () => {
   const [showAddForm, setShowAddForm] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+
+
+  useEffect(() => {
+    const isAuth = localStorage.getItem("isAuthenticated");
+    if (!isAuth) {
+      router.push("/auth/login");
+    }
+  }, [router]);
 
   // Updated initial data to match the new form fields
   const initialData = [
@@ -146,11 +154,16 @@ const Dashboard = () => {
   const cancelLogout = () => {
     setLogoutDialogOpen(false)
   }
-
   const confirmLogout = () => {
-    toast.success("Logged out successfully")
-    router.push("/")
-  }
+    // Clear auth flags
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("userData");
+  
+    // Show toast and redirect
+    toast.success("Logged out successfully");
+    router.push("/auth/login");
+  };
+  
 
 
   const handleAddProduction = (newProduction) => {
@@ -236,25 +249,7 @@ const Dashboard = () => {
         <Divider />
 
         <Box className="sidebar-content" sx={{ flex: 1, overflowY: "auto", p: 2 }}>
-          {/* <Stack spacing={1} className="sidebar-menu">
-            {menuItems.map((item) => (
-              <Button
-                key={item.text}
-                startIcon={item.icon}
-                className={router.pathname === item.path ? "menu-item-active" : "menu-item"}
-                fullWidth
-                sx={{
-                  justifyContent: "flex-start",
-                  padding: "10px 16px",
-                  borderRadius: "8px",
-                  margin: "4px 0",
-                  textTransform: "none",
-                }}
-                onClick={() => router.push(item.path)}
-              >
-                {item.text}
-              </Button>
-            ))} */}
+          
 
           {isAdmin && (
             <Button
@@ -473,5 +468,6 @@ const Dashboard = () => {
 Dashboard.getLayout = function getLayout(page) {
   return page
 }
+
 
 export default Dashboard

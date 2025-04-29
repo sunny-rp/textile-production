@@ -1,7 +1,7 @@
 "use client"
 
 import { Box, Button, TextField, Typography, IconButton, InputAdornment, FormHelperText, Checkbox } from "@mui/material"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Form, Formik } from "formik"
 import * as yup from "yup"
 import styled from "@emotion/styled"
@@ -12,6 +12,8 @@ import { GoKey } from "react-icons/go"
 import { Eye, EyeOff } from "lucide-react"
 import CustomHead from "../../../components/CustomHead"
 import LoginLayout from "../../../layout/LoginLayout/LoginLayout"
+import { loginUser } from "@/api/authApi"
+import nookies from "nookies";
 
 const SignupComponent = styled(Box)(({ theme }) => ({
   minHeight: "100vh",
@@ -37,8 +39,6 @@ const SignupComponent = styled(Box)(({ theme }) => ({
     maxHeight: "100%",
     display: "flex",
     flexDirection: "column",
-    // justifyContent: "center",
-    // alignItems: "center",
     "& .mainBox": {
       backgroundColor: "rgba(255, 255, 255, 0.05)",
       boxShadow: "none",
@@ -47,14 +47,23 @@ const SignupComponent = styled(Box)(({ theme }) => ({
   },
 }))
 
-// List of admin emails for role-based access control
-const ADMIN_EMAILS = ["admin@textile.com", "manager@textile.com", "supervisor@textile.com"]
-
 export default function Login() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setisLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [isRemember, setIsRemember] = useState(false)
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const isAuth = localStorage.getItem("isAuthenticated");
+    if (isAuth === "true") {
+      router.push("/dashboard");
+    } else {
+      setCheckingAuth(false);
+    }
+  }, [router]);
+
+  if (checkingAuth) return null;
 
   const formValidationSchema = yup.object().shape({
     email: yup
@@ -76,58 +85,21 @@ export default function Login() {
       email: values.email.toLowerCase(),
       password: values.password,
     }
+
     try {
-      setisLoading(true)
+      const res = await loginUser({
+        email: values.email.toLowerCase(),
+        password: values.password,
+      })
 
-      // For demo purposes, we'll simulate a successful login
-      // In a real app, you would call your API here
-      setTimeout(() => {
-        // Check if the email is an admin email
-        const isAdmin = ADMIN_EMAILS.includes(formData.email)
-
-        // Store user data and role in localStorage
-        const userData = {
-          email: formData.email,
-          role: isAdmin ? "admin" : "user",
-          name: formData.email.split("@")[0],
-          isAuthenticated: true,
-        }
-
-        localStorage.setItem("userData", JSON.stringify(userData))
-
-        // Redirect to dashboard
+      if (res.data.statusCode === 200) {
+        localStorage.setItem("isAuthenticated", "true");
+        // No need to set the token since it's set by the backend already
+        // Redirect to the dashboard
         router.push("/dashboard")
-
-        toast.success(`Welcome back, ${userData.name}!`)
-        setisLoading(false)
-      }, 1000)
-
-      // Original API call code (commented out for demo)
-      /*
-      const response = await apiRouterCall({
-        method: "POST",
-        url: api_configs.login,
-        bodyData: formData,
-      });
-
-      if (response?.data?.responseCode === 200) {
-        let obj = JSON.stringify(formData);
-        window.localStorage.setItem("loginData", obj);
-        let endTime = moment().add(3, "m").unix();
-        if (endTime) {
-          const timeLefts = calculateTimeLeft(endTime * 1000);
-          sessionStorage.setItem("otpTimer", JSON.stringify(timeLefts));
-        }
-        sessionStorage.setItem("previousRoute", router.asPath);
-        router.push(`/auth/verify-otp?${values.email.toLowerCase()}`);
-      } else {
-        toast.error(response.data.responseMessage);
       }
-      */
     } catch (error) {
-      setisLoading(false)
-      console.error("Error:", error)
-      toast.error(error?.response?.data?.responseMessage || "Login failed.")
+      toast.error(error.message || "Login failed");
     }
   }
 
@@ -139,15 +111,6 @@ export default function Login() {
           <Typography variant="h1" color="primary" className="loginText">
             Login
           </Typography>
-          {/* <Typography variant="body1" color="#000000CC" mt={2}>
-            Don't have an account?{" "}
-            <span
-              style={{ color: "#2752E7", fontWeight: 600, cursor: "pointer" }}
-              onClick={() => router.push("/auth/sign-up")}
-            >
-              Sign Up
-            </span>
-          </Typography> */}
         </Box>
 
         <Formik
@@ -230,7 +193,7 @@ export default function Login() {
                 <FormHelperText error>{touched.password && errors.password}</FormHelperText>
               </Box>
 
-              <Box className="agreeBox displaySpacebetween" mt={5.4} align="center">
+              {/* <Box className="agreeBox displaySpacebetween" mt={5.4} align="center">
                 <Box
                   style={{ marginLeft: "-8px" }}
                   className="displayStart"
@@ -265,8 +228,8 @@ export default function Login() {
                   onClick={() => router.push("/auth/forgot-password")}
                 >
                   Forgot Password?
-                </Typography>
-              </Box>
+                // </Typography>
+              </Box> */}
 
               <Box className="displayCenter" mt={5.4}>
                 <Button variant="contained" color="primary" type="submit" fullWidth disabled={isLoading}>
