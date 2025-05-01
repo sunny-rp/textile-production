@@ -50,6 +50,7 @@ const drawerWidth = 260
 
 const Dashboard = () => {
   const router = useRouter()
+  const [userName, setUserName] = useState("")
   const [userData, setUserData] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [productionData, setProductionData] = useState([])
@@ -69,7 +70,8 @@ const Dashboard = () => {
       router.push("/auth/login")
       return
     }
-
+    const storedName = localStorage.getItem("userName")
+    setUserName(storedName || "User")
     // Get the account type from URL query parameters
     const { accountType } = router.query
 
@@ -206,6 +208,7 @@ const Dashboard = () => {
     // Clear auth flags
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userData")
+    localStorage.removeItem("userName")
 
     // Show toast and redirect
     toast.success("Logged out successfully")
@@ -419,12 +422,12 @@ const Dashboard = () => {
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mt: 1 }}>
               <Typography variant="subtitle1" className="welcome-message">
-              Welcome, {"User"}
+              Welcome, {userName}
               </Typography> 
               <Chip
                 label={isAdmin ? "Administrator" : "User"}
                 size="small"
-                color={isAdmin ? "primary" : "default"}
+                color={isAdmin ? "primary" : "primary"}
                 className="role-chip"
                 sx={{ ml: 1 }}
               />

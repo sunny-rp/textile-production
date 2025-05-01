@@ -1,6 +1,6 @@
 "use client"
 
-import { Box, Button, TextField, Typography, IconButton, InputAdornment, FormHelperText } from "@mui/material"
+import { Box, Button, TextField, Typography, IconButton, InputAdornment, FormHelperText, Paper } from "@mui/material"
 import { useState, useEffect } from "react"
 import { Form, Formik } from "formik"
 import * as yup from "yup"
@@ -13,6 +13,7 @@ import { Eye, EyeOff } from "lucide-react"
 import CustomHead from "../../../components/CustomHead"
 import LoginLayout from "../../../layout/LoginLayout/LoginLayout"
 import { loginUser } from "@/api/authApi"
+
 
 const SignupComponent = styled(Box)(({ theme }) => ({
   minHeight: "100vh",
@@ -90,12 +91,18 @@ export default function Login() {
         password: values.password,
       })
 
+      console.log(res.data.message);
+
+
       if (res.data.statusCode === 200) {
         localStorage.setItem("isAuthenticated", "true")
 
         // Fix: Extract accountType from the nested data structure
         const accountType = res.data.data.accountType
         const userName = res.data.data.fullname
+
+        // ✅ Store userName in localStorage
+        localStorage.setItem("userName", userName)
 
         // Pass the account type as a query parameter
         router.push({
@@ -106,112 +113,122 @@ export default function Login() {
         })
 
         console.log("hello", res)
+
+
         toast.success("Logged In Successfully")
       }
-    } catch (error) {
-      toast.error(error.message || "Login failed")
+    }
+    catch (error) {
+      toast.error("Email id or password is incorrect")
     }
   }
 
   return (
     <SignupComponent>
-      <CustomHead image="/images/FbSizeImage.png" video="" isVideo={false} />
-      <Box className="loginBox" sx={{ color: "#2752e7" }}>
-        <Box align="center" mb={5.4}>
-          <Typography variant="h1" color="primary" className="loginText">
-            Login
-          </Typography>
+      <Paper>
+        <Box className="companyHeading">
+          <Typography variant="h2" color="primary">Development</Typography>
+          
+
         </Box>
+        <CustomHead image="/images/FbSizeImage.png" video="" isVideo={false} />
+        <Box className="loginBox" sx={{ color: "#2752e7" }}>
+          <Box align="center" mb={5.4}>
+            <Typography variant="h1" color="primary" className="loginText">
+              Login
+            </Typography>
+          </Box>
 
-        <Formik
-          initialValues={{
-            email: "",
-            password: "",
-          }}
-          initialStatus={{
-            success: false,
-            successMsg: "",
-          }}
-          validationSchema={formValidationSchema}
-          onSubmit={handleFormSubmit}
-        >
-          {({ errors, handleBlur, handleChange, touched, values }) => (
-            <Form>
-              <Box>
-                <TextField
-                  fullWidth
-                  variant="standard"
-                  placeholder="Email"
-                  type="text"
-                  name="email"
-                  error={Boolean(touched.email && errors.email)}
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  value={values.email}
-                  autoComplete="off"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <IconButton edge="start" sx={{ p: "1px", ml: "4px" }}>
-                          <MdOutlineMail style={{ color: "#00000099" }} />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                    inputProps: { style: { paddingLeft: "0px" } },
-                  }}
-                />
-                <FormHelperText error>{touched.email && errors.email}</FormHelperText>
-              </Box>
+          <Formik
+            initialValues={{
+              email: "",
+              password: "",
+            }}
+            initialStatus={{
+              success: false,
+              successMsg: "",
+            }}
+            validationSchema={formValidationSchema}
+            onSubmit={handleFormSubmit}
+          >
+            {({ errors, handleBlur, handleChange, touched, values }) => (
+              <Form>
+                <Box>
+                  <TextField
+                    fullWidth
+                    variant="standard"
+                    placeholder="Email"
+                    type="text"
+                    name="email"
+                    error={Boolean(touched.email && errors.email)}
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    value={values.email}
+                    autoComplete="off"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <IconButton edge="start" sx={{ p: "1px", ml: "4px" }}>
+                            <MdOutlineMail style={{ color: "#00000099" }} />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                      inputProps: { style: { paddingLeft: "0px" } },
+                    }}
+                  />
+                  <FormHelperText error>{touched.email && errors.email}</FormHelperText>
+                </Box>
 
-              <Box mt={3}>
-                <TextField
-                  fullWidth
-                  variant="standard"
-                  placeholder="Password"
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  error={Boolean(touched.password && errors.password)}
-                  onBlur={handleBlur}
-                  onChange={handleChange}
-                  value={values.password}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <IconButton edge="start" sx={{ p: "1px", ml: "4px" }}>
-                          <GoKey style={{ color: "#00000099" }} />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          edge="end"
-                          sx={{ p: "1px", mr: "0px" }}
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <Eye style={{ color: "#00000099" }} />
-                          ) : (
-                            <EyeOff style={{ color: "#00000099" }} />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                    inputProps: { style: { paddingLeft: "0px" } },
-                  }}
-                />
-                <FormHelperText error>{touched.password && errors.password}</FormHelperText>
-              </Box>
-              <Box className="displayCenter" mt={5.4}>
-                <Button variant="contained" color="primary" type="submit" fullWidth disabled={isLoading}>
-                  {isLoading ? "Logging in..." : "Log in"}
-                </Button>
-              </Box>
-            </Form>
-          )}
-        </Formik>
-        <Toaster position="top-right" />
-      </Box>
+                <Box mt={3}>
+                  <TextField
+                    fullWidth
+                    variant="standard"
+                    placeholder="Password"
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    error={Boolean(touched.password && errors.password)}
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    value={values.password}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <IconButton edge="start" sx={{ p: "1px", ml: "4px" }}>
+                            <GoKey style={{ color: "#00000099" }} />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            edge="end"
+                            sx={{ p: "1px", mr: "0px" }}
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <Eye style={{ color: "#00000099" }} />
+                            ) : (
+                              <EyeOff style={{ color: "#00000099" }} />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                      inputProps: { style: { paddingLeft: "0px" } },
+                    }}
+                  />
+                  <FormHelperText error>{touched.password && errors.password}</FormHelperText>
+                </Box>
+                <Box className="displayCenter" mt={5.4}>
+                  <Button variant="contained" color="primary" type="submit" fullWidth disabled={isLoading}>
+                    {isLoading ? "Logging in..." : "Log in"}
+                  </Button>
+                </Box>
+              </Form>
+            )}
+          </Formik>
+          <Toaster position="top-right" />
+        </Box>
+      </Paper>
     </SignupComponent>
   )
 }
