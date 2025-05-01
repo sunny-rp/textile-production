@@ -1,19 +1,18 @@
 "use client"
 
-import { Box, Button, TextField, Typography, IconButton, InputAdornment, FormHelperText, Checkbox } from "@mui/material"
+import { Box, Button, TextField, Typography, IconButton, InputAdornment, FormHelperText } from "@mui/material"
 import { useState, useEffect } from "react"
 import { Form, Formik } from "formik"
 import * as yup from "yup"
 import styled from "@emotion/styled"
 import { useRouter } from "next/router"
-import toast from "react-hot-toast"
+import toast, { Toaster } from "react-hot-toast"
 import { MdOutlineMail } from "react-icons/md"
 import { GoKey } from "react-icons/go"
 import { Eye, EyeOff } from "lucide-react"
 import CustomHead from "../../../components/CustomHead"
 import LoginLayout from "../../../layout/LoginLayout/LoginLayout"
 import { loginUser } from "@/api/authApi"
-import nookies from "nookies";
 
 const SignupComponent = styled(Box)(({ theme }) => ({
   minHeight: "100vh",
@@ -52,18 +51,18 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isRemember, setIsRemember] = useState(false)
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [checkingAuth, setCheckingAuth] = useState(true)
 
   useEffect(() => {
-    const isAuth = localStorage.getItem("isAuthenticated");
+    const isAuth = localStorage.getItem("isAuthenticated")
     if (isAuth === "true") {
-      router.push("/dashboard");
+      router.push("/dashboard")
     } else {
-      setCheckingAuth(false);
+      setCheckingAuth(false)
     }
-  }, [router]);
+  }, [router])
 
-  if (checkingAuth) return null;
+  if (checkingAuth) return null
 
   const formValidationSchema = yup.object().shape({
     email: yup
@@ -74,7 +73,6 @@ export default function Login() {
     password: yup
       .string()
       .trim()
-      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, "Please enter a valid password.")
       .required("Password is required.")
       .max(18, "Password should not exceed 18 characters.")
       .min(8, "Password must be at least 8 characters."),
@@ -93,13 +91,25 @@ export default function Login() {
       })
 
       if (res.data.statusCode === 200) {
-        localStorage.setItem("isAuthenticated", "true");
-        // No need to set the token since it's set by the backend already
-        // Redirect to the dashboard
-        router.push("/dashboard")
+        localStorage.setItem("isAuthenticated", "true")
+
+        // Fix: Extract accountType from the nested data structure
+        const accountType = res.data.data.accountType
+        const userName = res.data.data.fullname
+
+        // Pass the account type as a query parameter
+        router.push({
+          pathname: "/dashboard",
+          query: {
+            accountType: accountType,
+          },
+        })
+
+        console.log("hello", res)
+        toast.success("Logged In Successfully")
       }
     } catch (error) {
-      toast.error(error.message || "Login failed");
+      toast.error(error.message || "Login failed")
     }
   }
 
@@ -192,45 +202,6 @@ export default function Login() {
                 />
                 <FormHelperText error>{touched.password && errors.password}</FormHelperText>
               </Box>
-
-              {/* <Box className="agreeBox displaySpacebetween" mt={5.4} align="center">
-                <Box
-                  style={{ marginLeft: "-8px" }}
-                  className="displayStart"
-                  onClick={() => !isLoading && setIsRemember(!isRemember)}
-                >
-                  <Checkbox
-                    checked={isRemember}
-                    sx={{
-                      color: "grey",
-                      "&.Mui-checked": {
-                        color: "black !important",
-                      },
-                      "& .MuiSvgIcon-root": {
-                        fontSize: "25px",
-                        color: "grey",
-                      },
-                    }}
-                  />
-                  <Typography variant="body1" color="#000000CC" ml={1}>
-                    Remember me
-                  </Typography>
-                </Box>
-
-                <Typography
-                  variant="body1"
-                  color="primary"
-                  sx={{  
-                    textAlign: "center",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                  }}
-                  onClick={() => router.push("/auth/forgot-password")}
-                >
-                  Forgot Password?
-                // </Typography>
-              </Box> */}
-
               <Box className="displayCenter" mt={5.4}>
                 <Button variant="contained" color="primary" type="submit" fullWidth disabled={isLoading}>
                   {isLoading ? "Logging in..." : "Log in"}
@@ -239,6 +210,7 @@ export default function Login() {
             </Form>
           )}
         </Formik>
+        <Toaster position="top-right" />
       </Box>
     </SignupComponent>
   )

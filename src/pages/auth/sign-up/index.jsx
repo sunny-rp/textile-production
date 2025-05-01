@@ -25,6 +25,7 @@ import { SecurePassword } from "../../../components/PasswordStrengthIndicator"
 import { FiUser } from "react-icons/fi"
 import { MdOutlineMail } from "react-icons/md"
 import { LiaKeySolid } from "react-icons/lia"
+import { registerUser } from "@/api/authApi"
 
 const StyledContainer = styled(Grid)({
   height: "100vh",
@@ -83,7 +84,7 @@ export default function Signup() {
       .string()
       .required("Confirm password is required.")
       .oneOf([yup.ref("password"), null], "Confirm password doesn't match."),
-    fullName: yup
+    fullname: yup
       .string("Please enter valid full name.")
       .required("Full name is required.")
       .matches(/^[a-zA-Z\s,-.']+$/, "Only alphabets and white spaces are allowed.")
@@ -93,7 +94,7 @@ export default function Signup() {
 
   const formik = useFormik({
     initialValues: {
-      fullName: "",
+      fullname: "",
       email: "",
       accountType: "",
       password: "",
@@ -102,46 +103,38 @@ export default function Signup() {
     validationSchema: formValidationSchema,
     onSubmit: async (values) => {
       try {
-        window.localStorage.setItem("user_email", values.email)
-        setIsLoading(true)
-
-        const [firstName, ...lastNameParts] = values.fullName.trim().split(" ")
-        const lastName = lastNameParts.join(" ")
-
-        const bodyData = {
+        setIsLoading(true);
+    
+        const formData = {
           email: values.email.toLowerCase(),
           password: values.password,
-          firstName,
-          lastName: lastName || "",
+          confirmPassword: values.confirmPassword,
+          fullname: values.fullname.trim(),
           accountType: values.accountType,
-        }
-
-        const response = {
-          data: {
-            responseCode: 200,
-            responseMessage: "Signup successful!",
-          },
-        }
-
-        if (response.data.responseCode === 200) {
-          toast.success(response.data.responseMessage)
-          const endTime = moment().add(3, "m").unix()
-          if (endTime) {
-            const timeLefts = calculateTimeLeft(endTime * 1000)
-            sessionStorage.setItem("otpTimer", JSON.stringify(timeLefts))
-          }
-          sessionStorage.setItem("previousRoute", router.asPath)
-          router.replace(`/auth/verify-otp?${values.email.toLowerCase()}`)
+        };
+    
+        console.log("Sending formData:", formData);
+    
+        const res = await registerUser(formData);
+        console.log("Signup response:", res);
+    
+        if (res.data.responseCode === 200) {
+          toast.success(res.data.responseMessage);
+          router.push("/auth/login")
         } else {
-          toast.error(response.data.responseMessage)
+          toast.error(res.data.responseMessage || "Signup failed");
         }
       } catch (error) {
-        console.log(error)
-        toast.error("An error occurred during signup")
+        console.error("Signup error:", error.response?.data || error.message);
+        toast.error(
+          error.response?.data?.message || "An error occurred during signup"
+        );
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    },
+    }
+    
+    
   })
 
   return (
@@ -173,17 +166,14 @@ export default function Signup() {
                       variant="standard"
                       placeholder="Full name"
                       type="text"
-                      name="fullName"
-                      value={formik.values.fullName}
-                      error={formik.touched.fullName && Boolean(formik.errors.fullName)}
+                      name="fullname"
+                      value={formik.values.fullname}
+                      error={formik.touched.fullname && Boolean(formik.errors.fullname)}
                       onBlur={formik.handleBlur}
                       disabled={isLoading}
                       onChange={formik.handleChange}
                       autoComplete="off"
                       inputProps={{ maxLength: 121 }}
-                      onKeyPress={(e) => {
-                        if (e.key === " ") e.preventDefault()
-                      }}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
@@ -192,7 +182,7 @@ export default function Signup() {
                         ),
                       }}
                     />
-                    <FormHelperText error>{formik.touched.fullName && formik.errors.fullName}</FormHelperText>
+                    <FormHelperText error>{formik.touched.fullname && formik.errors.fullname}</FormHelperText>
                   </Box>
 
                   <Box mt={3}>
