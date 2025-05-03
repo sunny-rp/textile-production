@@ -44,6 +44,8 @@ import ProductionTable from "../../components/ProductionTable"
 import { SecurePassword } from "../../components/PasswordStrengthIndicator"
 import { Toaster } from "react-hot-toast"
 import { registerUser } from "@/api/authApi"
+import { createClient, totalClient } from "@/api/clientApi"
+
 
 // List of admin emails for role-based access control
 const drawerWidth = 260
@@ -70,6 +72,9 @@ const Dashboard = () => {
       router.push("/auth/login")
       return
     }
+
+    
+
     const storedName = localStorage.getItem("userName")
     setUserName(storedName || "User")
     // Get the account type from URL query parameters
@@ -91,38 +96,22 @@ const Dashboard = () => {
     }
 
     // Load initial production data
-    setProductionData(initialData)
+    
     setIsLoading(false)
-  }, [router.query]) 
-  const initialData = [
-    {
-      id: 1,
-      material: "Cotton",
-      t1: "T1-001",
-      materialDescription: "Premium cotton fabric",
-      flameAdhesive: "Flame",
-      colorway: "Blue",
-      width: 150,
-    },
-    {
-      id: 2,
-      material: "Polyester",
-      t1: "T1-002",
-      materialDescription: "Standard polyester blend",
-      flameAdhesive: "Adhesive",
-      colorway: "Red",
-      width: 120,
-    },
-    {
-      id: 3,
-      material: "Silk",
-      t1: "T1-003",
-      materialDescription: "Luxury silk material",
-      flameAdhesive: "Flame",
-      colorway: "Gold",
-      width: 100,
-    },
-  ]
+  }, [router.query])
+
+  useEffect(() => {
+
+      async function fetchClientData() {
+        const clientData = await totalClient();
+        console.log(clientData);
+        
+        setProductionData(clientData.data.data.clients);
+        console.log("client data", productionData);
+      }
+
+    fetchClientData();
+  }, [productionData]);
 
   const formValidationSchema = yup.object().shape({
     email: yup
@@ -215,15 +204,30 @@ const Dashboard = () => {
     router.push("/auth/login")
   }
 
-  const handleAddProduction = (newProduction) => {
-    const newEntry = {
-      id: productionData.length + 1,
-      ...newProduction,
-    }
+  const handleAddProduction = async (newProduction) => {
+    try {
+      console.log("Submitting production data:", newProduction)
+      const response = await createClient(newProduction)
+      console.log("API Response:", response)
 
-    setProductionData([...productionData, newEntry])
-    toast.success("Production data added successfully")
-    setShowAddForm(false)
+      if (response.status === 200 || response.status === 201) {
+        const newEntry = {
+          id: productionData.length + 1,
+          ...response.data,
+        }
+
+        setProductionData([...productionData, newEntry])
+        toast.success("Production data added successfully")
+        setShowAddForm(false)
+      } else {
+        console.log("API Response:", response)
+        toast.error(`Failed to add production. Status code: ${response.status}`)
+      }
+    } catch (error) {
+      console.error("Error adding production:", error)
+      console.error("Error details:", error.response?.data || "No response data")
+      toast.error(`Failed to add production data: ${error.response?.data?.message || error.message}`)
+    }
   }
 
   const handleUpdateProduction = (id, updatedData) => {
@@ -422,8 +426,8 @@ const Dashboard = () => {
             </Typography>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mt: 1 }}>
               <Typography variant="subtitle1" className="welcome-message">
-              Welcome, {userName}
-              </Typography> 
+                Welcome, {userName}
+              </Typography>
               <Chip
                 label={isAdmin ? "Administrator" : "User"}
                 size="small"
@@ -737,3 +741,5 @@ Dashboard.getLayout = function getLayout(page) {
 }
 
 export default Dashboard
+
+

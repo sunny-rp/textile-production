@@ -98,9 +98,14 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
 
   // Update filtered data when data, search term, or filters change
   useEffect(() => {
+    if (!Array.isArray(data)) {
+      console.warn("ProductionTable expected 'data' to be an array but got:", data)
+      return
+    }
+  
     let result = [...data]
-
-    // Apply search filter
+  
+    // search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase()
       result = result.filter(
@@ -109,22 +114,22 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
           (item.t1 && item.t1.toLowerCase().includes(searchLower)) ||
           (item.materialDescription && item.materialDescription.toLowerCase().includes(searchLower)) ||
           (item.colorway && item.colorway.toLowerCase().includes(searchLower)) ||
-          (item.width && item.width.toString().includes(searchTerm)),
+          (item.width && item.width.toString().includes(searchTerm))
       )
     }
-
-    // Apply material filter
+  
+    // filters
     if (selectedFilters.material.length > 0) {
       result = result.filter((item) => selectedFilters.material.includes(item.material))
     }
-
-    // Apply flame/adhesive filter
+  
     if (selectedFilters.flameAdhesive.length > 0) {
       result = result.filter((item) => selectedFilters.flameAdhesive.includes(item.flameAdhesive))
     }
-
+  
     setFilteredData(result)
   }, [data, searchTerm, selectedFilters])
+  
 
   const formik = useFormik({
     initialValues: {

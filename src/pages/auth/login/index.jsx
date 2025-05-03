@@ -125,10 +125,21 @@ export default function Login() {
 
   return (
     <SignupComponent>
-      <Paper>
+      <Paper
+        className="loginContainer"
+        sx={{
+          maxWidth: { xs: '90%', sm: '80%', md: '60%', lg: '50%', xl: '40%' },
+          mx: 'auto',
+          my: 4,
+          p: { xs: 2, sm: 3, md: 4 },
+          boxShadow: 3,
+          borderRadius: 2,
+        }}
+      >
         <Box className="companyHeading">
           <Typography variant="h2" color="primary">Development</Typography>
-          
+          <img src="/images/download.jpeg" alt="Descriptive alt text" height="50" width="50" />
+
 
         </Box>
         <CustomHead image="/images/FbSizeImage.png" video="" isVideo={false} />
