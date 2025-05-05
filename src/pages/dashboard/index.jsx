@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/router"
 import {
   Box,
@@ -44,8 +44,7 @@ import ProductionTable from "../../components/ProductionTable"
 import { SecurePassword } from "../../components/PasswordStrengthIndicator"
 import { Toaster } from "react-hot-toast"
 import { registerUser } from "@/api/authApi"
-import { createClient, totalClient } from "@/api/clientApi"
-
+import { createClient, totalClient,editClient } from "@/api/clientApi"
 
 // List of admin emails for role-based access control
 const drawerWidth = 260
@@ -57,6 +56,7 @@ const Dashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false)
   const [productionData, setProductionData] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false) // New state for tracking form submission
   const [showAddForm, setShowAddForm] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
@@ -66,52 +66,75 @@ const Dashboard = () => {
   const [isChecked, setIsChecked] = useState(false)
   const [signupLoading, setSignupLoading] = useState(false)
 
+  // Memoized fetch function to prevent unnecessary re-creation
+  const fetchClientData = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const clientData = await totalClient()
+      if (clientData?.data?.data?.clients) {
+        setProductionData(clientData.data.data.clients)
+      }
+    } catch (error) {
+      console.error("Failed to fetch client data:", error)
+      toast.error("Failed to load production data")
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
+    // Check if user is authenticated
     const isAuth = localStorage.getItem("isAuthenticated")
     if (!isAuth) {
       router.push("/auth/login")
       return
     }
 
-    
-
-    const storedName = localStorage.getItem("userName")
-    setUserName(storedName || "User")
-    // Get the account type from URL query parameters
-    const { accountType } = router.query
-
-    if (accountType) {
-      // Set admin status based on account type from URL
-      setIsAdmin(accountType === "Admin")
-
-      // Set mock user data with the correct role
-      const mockUserData = {
-        name: "Demo User",
-        email: accountType === "Admin" ? "admin@textile.com" : "user@textile.com",
-        role: accountType === "Admin" ? "admin" : "user",
-        isAuthenticated: true,
-      }
-
-      setUserData(mockUserData)
+    // Check if we're on the login page and redirect if authenticated
+    if (router.pathname === "/auth/login") {
+      // Get the stored account type
+      const storedAccountType = localStorage.getItem("accountType")
+      // Redirect to dashboard with the stored account type
+      router.push({
+        pathname: "/dashboard",
+        query: { accountType: storedAccountType || "User" },
+      })
+      return
     }
 
-    // Load initial production data
-    
-    setIsLoading(false)
-  }, [router.query])
+    // Set username from localStorage
+    const storedName = localStorage.getItem("userName")
+    setUserName(storedName || "User")
 
-  useEffect(() => {
+    // Get the account type from URL query parameters or localStorage
+    const { accountType } = router.query
+    const storedAccountType = localStorage.getItem("accountType")
 
-      async function fetchClientData() {
-        const clientData = await totalClient();
-        console.log(clientData);
-        
-        setProductionData(clientData.data.data.clients);
-        console.log("client data", productionData);
-      }
+    // Determine the account type to use (prefer URL param, fallback to localStorage)
+    const effectiveAccountType = accountType || storedAccountType || "User"
 
-    fetchClientData();
-  }, [productionData]);
+    // Store the account type in localStorage for persistence
+    if (accountType) {
+      localStorage.setItem("accountType", accountType)
+    }
+
+    // Set admin status based on the effective account type
+    const isAdminUser = effectiveAccountType === "Admin"
+    setIsAdmin(isAdminUser)
+
+    // // // Set mock user data with the correct role
+    // const mockUserData = {
+    //   name: "Demo User",
+    //   email: isAdminUser ? "admin@textile.com" : "user@textile.com",
+    //   role: isAdminUser ? "admin" : "user",
+    //   isAuthenticated: true,
+    // }
+
+    // setUserData(mockUserData)
+
+    // Load initial data
+    fetchClientData()
+  }, [router.query, router.pathname, fetchClientData])
 
   const formValidationSchema = yup.object().shape({
     email: yup
@@ -149,7 +172,7 @@ const Dashboard = () => {
     validationSchema: formValidationSchema,
     onSubmit: async (values) => {
       try {
-        setIsLoading(true)
+        setSignupLoading(true)
 
         const formData = {
           email: values.email.toLowerCase(),
@@ -159,10 +182,7 @@ const Dashboard = () => {
           accountType: values.accountType,
         }
 
-        console.log("Sending formData:", formData)
-
         const res = await registerUser(formData)
-        console.log("Signup response:", res)
 
         if (res.data.statusCode === 201) {
           toast.success(res.data.message || "Account Created Successfully")
@@ -184,7 +204,7 @@ const Dashboard = () => {
         console.error("Signup error:", error.response?.data || error.message)
         toast.error(error.response?.data?.message || "An error occurred during signup")
       } finally {
-        setIsLoading(false)
+        setSignupLoading(false)
       }
     },
   })
@@ -198,58 +218,119 @@ const Dashboard = () => {
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("userData")
     localStorage.removeItem("userName")
+    localStorage.removeItem("accountType") // Also clear account type
 
     // Show toast and redirect
     toast.success("Logged out successfully")
     router.push("/auth/login")
   }
 
+  // Optimized function to add production data with better error handling and optimistic updates
   const handleAddProduction = async (newProduction) => {
     try {
-      console.log("Submitting production data:", newProduction)
+      // Set submitting state to true
+      setIsSubmitting(true)
+
+      // Create a temporary ID for optimistic update
+      const tempId = `temp-${Date.now()}`
+
+      // Create a temporary entry with the form data
+      const tempEntry = {
+        id: tempId,
+        ...newProduction,
+        // Add any default values that might be needed
+        _isOptimistic: true, // Flag to identify this as an optimistic update
+      }
+
+      // Optimistically update the UI immediately
+      setProductionData((prevData) => [...prevData, tempEntry])
+
+      // Close the form immediately for better UX
+      setShowAddForm(false)
+
+      // Show a loading toast that we'll update later
+      const toastId = toast.loading("Adding production data...")
+
+      // Make the actual API call
       const response = await createClient(newProduction)
-      console.log("API Response:", response)
 
+      // Handle the API response
       if (response.status === 200 || response.status === 201) {
-        const newEntry = {
-          id: productionData.length + 1,
-          ...response.data,
-        }
+        // Get the real data from the response
+        const newClientData = response.data.data
 
-        setProductionData([...productionData, newEntry])
-        toast.success("Production data added successfully")
-        setShowAddForm(false)
+        // Replace the temporary entry with the real one
+        setProductionData((prevData) =>
+          prevData.map((item) => (item.id === tempId ? { ...newClientData, _isOptimistic: false } : item)),
+        )
+
+        // Update the toast to success
+        toast.success("Production data added successfully", { id: toastId })
       } else {
-        console.log("API Response:", response)
-        toast.error(`Failed to add production. Status code: ${response.status}`)
+        // If the API call failed, remove the temporary entry
+        setProductionData((prevData) => prevData.filter((item) => item.id !== tempId))
+
+        // Update the toast to error
+        toast.error(`Failed to add production data: ${response.status}`, { id: toastId })
       }
     } catch (error) {
       console.error("Error adding production:", error)
-      console.error("Error details:", error.response?.data || "No response data")
-      toast.error(`Failed to add production data: ${error.response?.data?.message || error.message}`)
+
+      // Remove the optimistic entry on error
+      setProductionData((prevData) => prevData.filter((item) => !item._isOptimistic))
+
+      // Show error toast
+      toast.error(`Failed to add production data: ${error.message || "Unknown error"}`)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  const handleUpdateProduction = (id, updatedData) => {
-    const updatedProductionData = productionData.map((item) => (item.id === id ? { ...item, ...updatedData } : item))
-
-    setProductionData(updatedProductionData)
-    toast.success("Production data updated successfully")
-  }
+  const handleUpdateProduction = async (id, updatedData) => {
+    try {
+      // Optimistic UI update
+      setProductionData(prev => prev.map(item => 
+        item.id === id ? { ...item, ...updatedData, _isUpdating: true } : item
+      ));
+      
+  
+      const response = await editClient(id, updatedData);
+      console.log("res",response)
+      if (response.data.statusCode === 200) {
+        toast.success(response.data.message || "Production data updated successfully");
+        await fetchClientData(); // Refresh the data
+      } else {
+        // Revert optimistic update if failed
+        setProductionData(prev => prev.map(item => 
+          item.id === id ? { ...item, _isUpdating: false } : item
+        ));
+        toast.error(response.data.message || "Failed to update production data");
+      }
+    } catch (error) {
+      console.error("Error updating production data:", error);
+      // Revert optimistic update on error
+      setProductionData(prev => prev.map(item => 
+        item.id === id ? { ...item, _isUpdating: false } : item
+      ));
+      toast.error(
+        error.response?.data?.message || 
+        "An error occurred while updating production data"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
 
   const handleDeleteProduction = (id) => {
+    // Optimistic delete for better UX
     const filteredData = productionData.filter((item) => item.id !== id)
     setProductionData(filteredData)
     toast.success("Production data deleted successfully")
   }
 
-  // Modify the handleLogout function to not require authentication
   const handleLogout = () => {
-    // Comment out localStorage removal
-    // localStorage.removeItem("userData")
-
     toast.success("Logged out successfully")
-    // Redirect to home instead of login
     router.push("/")
   }
 
@@ -264,24 +345,16 @@ const Dashboard = () => {
     setIsChecked(false)
   }
 
-  if (isLoading) {
-    return (
-      <Box className="loading-container">
-        <CircularProgress color="primary" />
-      </Box>
-    )
-  }
-
   return (
     <Box className="dashboard-root">
       {/* Sidebar Drawer */}
       <Drawer
-        variant="temporary" // changed from 'persistent'
+        variant="temporary"
         anchor="left"
         open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)} // add this to handle outside clicks
+        onClose={() => setSidebarOpen(false)}
         ModalProps={{
-          keepMounted: true, // Improves performance on mobile
+          keepMounted: true,
         }}
         sx={{
           width: drawerWidth,
@@ -318,6 +391,7 @@ const Dashboard = () => {
                 variant="contained"
                 color="primary"
                 fullWidth
+                disabled={isSubmitting}
                 sx={{
                   justifyContent: "flex-start",
                   padding: "10px 16px",
@@ -338,6 +412,7 @@ const Dashboard = () => {
                 startIcon={<People />}
                 variant="outlined"
                 fullWidth
+                disabled={signupLoading}
                 sx={{
                   justifyContent: "flex-start",
                   padding: "10px 16px",
@@ -459,13 +534,14 @@ const Dashboard = () => {
                       variant="outlined"
                       size="small"
                       className="cancel-button"
+                      disabled={isSubmitting}
                       onClick={() => setShowAddForm(false)}
                     >
                       Cancel
                     </Button>
                   </Box>
                   <Divider sx={{ mb: 3 }} />
-                  <ProductionForm onSubmit={handleAddProduction} />
+                  <ProductionForm onSubmit={handleAddProduction} isSubmitting={isSubmitting} />
                 </Paper>
               </Grid>
             )}
@@ -484,12 +560,18 @@ const Dashboard = () => {
                   Production Records
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
-                <ProductionTable
-                  data={productionData}
-                  isAdmin={isAdmin}
-                  onUpdate={isAdmin ? handleUpdateProduction : undefined}
-                  onDelete={isAdmin ? handleDeleteProduction : undefined}
-                />
+                {isLoading && !productionData.length ? (
+                  <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+                    <CircularProgress size={40} />
+                  </Box>
+                ) : (
+                  <ProductionTable
+                    data={productionData}
+                    isAdmin={isAdmin}
+                    onUpdate={isAdmin ? handleUpdateProduction : undefined}
+                    onDelete={isAdmin ? handleDeleteProduction : undefined}
+                  />
+                )}
               </Paper>
             </Grid>
           </Grid>
@@ -741,5 +823,3 @@ Dashboard.getLayout = function getLayout(page) {
 }
 
 export default Dashboard
-
-

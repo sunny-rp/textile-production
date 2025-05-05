@@ -27,15 +27,11 @@ import {
   Grid,
   Box,
   InputAdornment,
-  Menu,
-  Checkbox,
-  ListItemText,
 } from "@mui/material"
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Visibility as ViewIcon,
-  FilterList as FilterIcon,
   Search as SearchIcon,
   Close as CloseIcon,
   Clear as ClearIcon,
@@ -100,11 +96,12 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
   useEffect(() => {
     if (!Array.isArray(data)) {
       console.warn("ProductionTable expected 'data' to be an array but got:", data)
+      setFilteredData([])
       return
     }
-  
+
     let result = [...data]
-  
+
     // search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase()
@@ -114,22 +111,21 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
           (item.t1 && item.t1.toLowerCase().includes(searchLower)) ||
           (item.materialDescription && item.materialDescription.toLowerCase().includes(searchLower)) ||
           (item.colorway && item.colorway.toLowerCase().includes(searchLower)) ||
-          (item.width && item.width.toString().includes(searchTerm))
+          (item.width && item.width.toString().includes(searchTerm)),
       )
     }
-  
+
     // filters
     if (selectedFilters.material.length > 0) {
       result = result.filter((item) => selectedFilters.material.includes(item.material))
     }
-  
+
     if (selectedFilters.flameAdhesive.length > 0) {
       result = result.filter((item) => selectedFilters.flameAdhesive.includes(item.flameAdhesive))
     }
-  
+
     setFilteredData(result)
   }, [data, searchTerm, selectedFilters])
-  
 
   const formik = useFormik({
     initialValues: {
@@ -312,38 +308,9 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
         >
           Export
         </Button>
-          <Divider />
-          <Divider />
+        <Divider />
+        <Divider />
       </div>
-
-      {/* Display active filters
-      {isFiltersApplied && (
-        <div className="active-filters">
-          <Typography variant="body2" className="active-filters-title">
-            Active Filters:
-          </Typography>
-          <div className="filter-chips">
-            {selectedFilters.material.map((type) => (
-              <Chip
-                key={`material-${type}`}
-                label={`Material: ${type}`}
-                size="small"
-                onDelete={() => handleFilterChange("material", type)}
-                className="filter-chip"
-              />
-            ))}
-            {selectedFilters.flameAdhesive.map((type) => (
-              <Chip
-                key={`flame-adhesive-${type}`}
-                label={`Type: ${type}`}
-                size="small"
-                onDelete={() => handleFilterChange("flameAdhesive", type)}
-                className="filter-chip"
-              />
-            ))}
-          </div>
-        </div>
-      )} */}
 
       {/* Modified table container to ensure full width */}
       <StyledTableContainer component={Paper} className="table-wrapper">
