@@ -44,7 +44,7 @@ import ProductionTable from "../../components/ProductionTable"
 import { SecurePassword } from "../../components/PasswordStrengthIndicator"
 import { Toaster } from "react-hot-toast"
 import { registerUser } from "@/api/authApi"
-import { createClient, totalClient,editClient } from "@/api/clientApi"
+import { createClient, totalClient,editClient, deleteClient } from "@/api/clientApi"
 
 // List of admin emails for role-based access control
 const drawerWidth = 260
@@ -70,13 +70,26 @@ const Dashboard = () => {
   const fetchClientData = useCallback(async () => {
     try {
       setIsLoading(true)
+      console.log("Fetching client data...")
       const clientData = await totalClient()
+      console.log("API Response:", clientData)
+
       if (clientData?.data?.data?.clients) {
-        setProductionData(clientData.data.data.clients)
+        const clients = clientData.data.data.clients
+        console.log("Client data received:", clients)
+        setProductionData(clients)
+      } else {
+        console.log("No clients data found in response:", clientData)
+        setProductionData([])
       }
     } catch (error) {
       console.error("Failed to fetch client data:", error)
+      if (error.response) {
+        console.error("Error response data:", error.response.data)
+        console.error("Error response status:", error.response.status)
+      }
       toast.error("Failed to load production data")
+      setProductionData([])
     } finally {
       setIsLoading(false)
     }
@@ -322,12 +335,40 @@ const Dashboard = () => {
   };
   
 
-  const handleDeleteProduction = (id) => {
-    // Optimistic delete for better UX
-    const filteredData = productionData.filter((item) => item.id !== id)
-    setProductionData(filteredData)
-    toast.success("Production data deleted successfully")
+  const handleDeleteProduction = async (id) => {
+    try {
+      // Log the request details for debugging
+      console.log("Delete request - ID:", id)
+
+      // Make API call with ID in the request data
+      const response = await deleteClient(id)
+
+      // Log the response for debugging
+      console.log("Delete response:", response)
+
+      // If delete was successful
+      if (response && response.status === 200) {
+        // Update the UI by filtering out the deleted item
+        const filteredData = productionData.filter((item) => item._id !== id)
+        setProductionData(filteredData)
+        toast.success("Production data deleted successfully")
+      } else {
+        toast.error(response?.data?.message || "Failed to delete production data")
+      }
+    } catch (error) {
+      console.error("Failed to delete client:", error)
+
+      // Log detailed error information
+      if (error.response) {
+        console.error("Error response data:", error.response.data)
+        console.error("Error response status:", error.response.status)
+        console.error("Error response headers:", error.response.headers)
+      }
+
+      toast.error(`Failed to delete production data: ${error.message || "Unknown error"}`)
+    }
   }
+  
 
   const handleLogout = () => {
     toast.success("Logged out successfully")
