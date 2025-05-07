@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { useRouter } from "next/router"
 import {
   Box,
@@ -44,7 +44,8 @@ import ProductionTable from "../../components/ProductionTable"
 import { SecurePassword } from "../../components/PasswordStrengthIndicator"
 import { Toaster } from "react-hot-toast"
 import { registerUser } from "@/api/authApi"
-import { createClient, totalClient,editClient, deleteClient } from "@/api/clientApi"
+import { createClient, totalClient, editClient, deleteClient } from "@/api/clientApi"
+import CloseIcon from "@mui/icons-material/Close"
 
 // List of admin emails for role-based access control
 const drawerWidth = 260
@@ -66,8 +67,15 @@ const Dashboard = () => {
   const [isChecked, setIsChecked] = useState(false)
   const [signupLoading, setSignupLoading] = useState(false)
 
+  // Add a ref to track if data has been fetched and prevent infinite loops
+  const dataFetchedRef = useRef(false)
+  const initialLoadDoneRef = useRef(false)
+
   // Memoized fetch function to prevent unnecessary re-creation
   const fetchClientData = useCallback(async () => {
+    // Skip if we're already loading or if data has been fetched and we're not submitting
+    if (isLoading && dataFetchedRef.current && !isSubmitting) return
+
     try {
       setIsLoading(true)
       console.log("Fetching client data...")
@@ -82,6 +90,9 @@ const Dashboard = () => {
         console.log("No clients data found in response:", clientData)
         setProductionData([])
       }
+
+      // Mark data as fetched
+      dataFetchedRef.current = true
     } catch (error) {
       console.error("Failed to fetch client data:", error)
       if (error.response) {
@@ -93,25 +104,22 @@ const Dashboard = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [isLoading, isSubmitting])
 
+  // Add this effect to log productionData after it changes
   useEffect(() => {
+    console.log("Production data state updated:", productionData)
+  }, [productionData])
+
+  // Initial setup effect - only runs once on mount
+  useEffect(() => {
+    // Skip if we've already done the initial load
+    if (initialLoadDoneRef.current) return
+
     // Check if user is authenticated
     const isAuth = localStorage.getItem("isAuthenticated")
     if (!isAuth) {
       router.push("/auth/login")
-      return
-    }
-
-    // Check if we're on the login page and redirect if authenticated
-    if (router.pathname === "/auth/login") {
-      // Get the stored account type
-      const storedAccountType = localStorage.getItem("accountType")
-      // Redirect to dashboard with the stored account type
-      router.push({
-        pathname: "/dashboard",
-        query: { accountType: storedAccountType || "User" },
-      })
       return
     }
 
@@ -135,19 +143,26 @@ const Dashboard = () => {
     const isAdminUser = effectiveAccountType === "Admin"
     setIsAdmin(isAdminUser)
 
-    // // // Set mock user data with the correct role
-    // const mockUserData = {
-    //   name: "Demo User",
-    //   email: isAdminUser ? "admin@textile.com" : "user@textile.com",
-    //   role: isAdminUser ? "admin" : "user",
-    //   isAuthenticated: true,
-    // }
-
-    // setUserData(mockUserData)
-
-    // Load initial data
+    // Load initial data for ALL users
+    console.log("Fetching client data for user type:", effectiveAccountType)
     fetchClientData()
-  }, [router.query, router.pathname, fetchClientData])
+
+    // Mark initial load as done
+    initialLoadDoneRef.current = true
+  }, [router.query, fetchClientData, router])
+
+  // Separate effect for handling query parameter changes
+  useEffect(() => {
+    // Only handle query changes after initial load
+    if (!initialLoadDoneRef.current) return
+
+    const { accountType } = router.query
+    if (accountType) {
+      localStorage.setItem("accountType", accountType)
+      const isAdminUser = accountType === "Admin"
+      setIsAdmin(isAdminUser)
+    }
+  }, [router.query])
 
   const formValidationSchema = yup.object().shape({
     email: yup
@@ -238,6 +253,13 @@ const Dashboard = () => {
     router.push("/auth/login")
   }
 
+  // Helper function to determine which ID field to use
+  const getIdField = (item) => {
+    // Check if the item has _id or id
+    if (item && item._id !== undefined) return "_id"
+    return "id"
+  }
+
   // Optimized function to add production data with better error handling and optimistic updates
   const handleAddProduction = async (newProduction) => {
     try {
@@ -249,7 +271,8 @@ const Dashboard = () => {
 
       // Create a temporary entry with the form data
       const tempEntry = {
-        id: tempId,
+        _id: tempId,
+        id: tempId, // Include both ID formats to be safe
         ...newProduction,
         // Add any default values that might be needed
         _isOptimistic: true, // Flag to identify this as an optimistic update
@@ -264,8 +287,10 @@ const Dashboard = () => {
       // Show a loading toast that we'll update later
       const toastId = toast.loading("Adding production data...")
 
+      console.log("Adding production with data:", newProduction)
       // Make the actual API call
       const response = await createClient(newProduction)
+      console.log("Add production response:", response)
 
       // Handle the API response
       if (response.status === 200 || response.status === 201) {
@@ -273,21 +298,28 @@ const Dashboard = () => {
         const newClientData = response.data.data
 
         // Replace the temporary entry with the real one
-        setProductionData((prevData) =>
-          prevData.map((item) => (item.id === tempId ? { ...newClientData, _isOptimistic: false } : item)),
-        )
+        setProductionData((prevData) => {
+          const idField = prevData.length > 0 ? getIdField(prevData[0]) : "_id"
+          return prevData.map((item) =>
+            item._id === tempId || item.id === tempId ? { ...newClientData, _isOptimistic: false } : item,
+          )
+        })
 
         // Update the toast to success
         toast.success("Production data added successfully", { id: toastId })
       } else {
         // If the API call failed, remove the temporary entry
-        setProductionData((prevData) => prevData.filter((item) => item.id !== tempId))
+        setProductionData((prevData) => prevData.filter((item) => item._id !== tempId && item.id !== tempId))
 
         // Update the toast to error
         toast.error(`Failed to add production data: ${response.status}`, { id: toastId })
       }
     } catch (error) {
       console.error("Error adding production:", error)
+      if (error.response) {
+        console.error("Error response data:", error.response.data)
+        console.error("Error response status:", error.response.status)
+      }
 
       // Remove the optimistic entry on error
       setProductionData((prevData) => prevData.filter((item) => !item._isOptimistic))
@@ -296,83 +328,111 @@ const Dashboard = () => {
       toast.error(`Failed to add production data: ${error.message || "Unknown error"}`)
     } finally {
       setIsSubmitting(false)
+      // Reset the data fetched flag to allow a refresh after adding
+      dataFetchedRef.current = false
     }
   }
 
+  // Then make sure your handleUpdateProduction function uses it correctly
   const handleUpdateProduction = async (id, updatedData) => {
     try {
+      setIsSubmitting(true)
+
+      // Log the request details for debugging
+      console.log("Update request - ID:", id)
+      console.log("Update request - Data:", updatedData)
+
+      // Ensure updatedData is not undefined
+      if (!updatedData) {
+        console.error("updatedData is undefined")
+        toast.error("Update data is missing")
+        return
+      }
+
       // Optimistic UI update
-      setProductionData(prev => prev.map(item => 
-        item.id === id ? { ...item, ...updatedData, _isUpdating: true } : item
-      ));
-      
-  
-      const response = await editClient(id, updatedData);
-      console.log("res",response)
-      if (response.data.statusCode === 200) {
-        toast.success(response.data.message || "Production data updated successfully");
-        await fetchClientData(); // Refresh the data
+      setProductionData((prev) =>
+        prev.map((item) => (item.id === id || item._id === id ? { ...item, ...updatedData, _isUpdating: true } : item)),
+      )
+
+      // Make the API call with both ID and updated data
+      const response = await editClient(id, updatedData)
+      console.log("Update response:", response)
+
+      if (response && response.data && response.data.statusCode === 200) {
+        toast.success(response.data.message || "Production data updated successfully")
+
+        // Reset the data fetched flag to allow a refresh after updating
+        dataFetchedRef.current = false
+        await fetchClientData() // Refresh the data
       } else {
         // Revert optimistic update if failed
-        setProductionData(prev => prev.map(item => 
-          item.id === id ? { ...item, _isUpdating: false } : item
-        ));
-        toast.error(response.data.message || "Failed to update production data");
+        setProductionData((prev) =>
+          prev.map((item) => (item.id === id || item._id === id ? { ...item, _isUpdating: false } : item)),
+        )
+        toast.error(response?.data?.message || "Failed to update production data")
       }
     } catch (error) {
-      console.error("Error updating production data:", error);
-      // Revert optimistic update on error
-      setProductionData(prev => prev.map(item => 
-        item.id === id ? { ...item, _isUpdating: false } : item
-      ));
-      toast.error(
-        error.response?.data?.message || 
-        "An error occurred while updating production data"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-
-  const handleDeleteProduction = async (id) => {
-    try {
-      // Log the request details for debugging
-      console.log("Delete request - ID:", id)
-
-      // Make API call with ID in the request data
-      const response = await deleteClient(id)
-
-      // Log the response for debugging
-      console.log("Delete response:", response)
-
-      // If delete was successful
-      if (response && response.status === 200) {
-        // Update the UI by filtering out the deleted item
-        const filteredData = productionData.filter((item) => item._id !== id)
-        setProductionData(filteredData)
-        toast.success("Production data deleted successfully")
-      } else {
-        toast.error(response?.data?.message || "Failed to delete production data")
-      }
-    } catch (error) {
-      console.error("Failed to delete client:", error)
+      console.error("Error updating production data:", error)
 
       // Log detailed error information
       if (error.response) {
         console.error("Error response data:", error.response.data)
         console.error("Error response status:", error.response.status)
         console.error("Error response headers:", error.response.headers)
+        console.error("Requested URL:", error.config.url)
       }
 
-      toast.error(`Failed to delete production data: ${error.message || "Unknown error"}`)
+      // Revert optimistic update on error
+      setProductionData((prev) =>
+        prev.map((item) => (item.id === id || item._id === id ? { ...item, _isUpdating: false } : item)),
+      )
+
+      toast.error(error.response?.data?.message || "An error occurred while updating production data")
+    } finally {
+      setIsSubmitting(false)
     }
   }
-  
+
+  const handleDeleteProduction = async (id) => {
+    // Optimistically remove item from UI
+    const sampleItem = productionData.length > 0 ? productionData[0] : null
+    const idField = getIdField(sampleItem)
+
+    // Store the item before removing it in case we need to restore it
+    const itemToDelete = productionData.find((item) => item[idField] === id)
+
+    // Remove the item from the UI immediately
+    const newProductionData = productionData.filter((item) => item[idField] !== id)
+    setProductionData(newProductionData)
+
+    const toastId = toast.loading("Deleting production data...")
+    setIsSubmitting(true)
+
+    try {
+      const response = await deleteClient(id)
+      console.log("Delete response:", response)
+
+      if (response && response.status === 200) {
+        toast.success("Production data deleted successfully", { id: toastId })
+      } else {
+        throw new Error(response?.data?.message || "Failed to delete production data")
+      }
+    } catch (error) {
+      console.error("Failed to delete client:", error)
+
+      toast.error(`Delete failed: ${error.message || "Unknown error"}`, { id: toastId })
+
+      // Restore the deleted item only if the delete fails
+      if (itemToDelete) {
+        setProductionData([...newProductionData, itemToDelete])
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   const handleLogout = () => {
-    toast.success("Logged out successfully")
-    router.push("/")
+    setLogoutDialogOpen(true)
   }
 
   const handleOpenSignupDialog = () => {
@@ -484,7 +544,7 @@ const Dashboard = () => {
               borderRadius: "8px",
               textTransform: "none",
             }}
-            onClick={() => setLogoutDialogOpen(true)}
+            onClick={handleLogout}
           >
             Logout
           </Button>
@@ -601,9 +661,13 @@ const Dashboard = () => {
                   Production Records
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
-                {isLoading && !productionData.length ? (
+                {isLoading ? (
                   <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
                     <CircularProgress size={40} />
+                  </Box>
+                ) : productionData.length === 0 ? (
+                  <Box sx={{ textAlign: "center", p: 4 }}>
+                    <Typography variant="body1">No production data available.</Typography>
                   </Box>
                 ) : (
                   <ProductionTable
@@ -626,6 +690,7 @@ const Dashboard = () => {
         onClose={cancelLogout}
         aria-labelledby="logout-dialog-title"
         aria-describedby="logout-dialog-description"
+        disableEscapeKeyDown={false}
       >
         <Box className="content-ask">
           <DialogTitle id="logout-dialog-title">Confirm Logout</DialogTitle>
@@ -650,11 +715,23 @@ const Dashboard = () => {
         maxWidth="sm"
         fullWidth
         aria-labelledby="signup-dialog-title"
+        disableEscapeKeyDown={false}
       >
         <DialogTitle id="signup-dialog-title" sx={{ textAlign: "center", pt: 3 }}>
           <Typography variant="h5" color="primary" fontWeight={600}>
             Create New Account
           </Typography>
+          <IconButton
+            onClick={handleCloseSignupDialog}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
         </DialogTitle>
         <DialogContent>
           <form

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/router"
 import {
   Table,
   TableBody,
@@ -74,10 +75,11 @@ const validationSchema = yup.object({
   materialDescription: yup.string().required("Material description is required"),
   flameAdhesive: yup.string().required("Flame / Adhesive is required"),
   colorway: yup.string().required("Colorway is required"),
-  width: yup.number().positive("Width must be positive").required("Width is required"),
+  width: yup.string().required("Width is required"),
 })
 
 const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
+  const router = useRouter()
   const [openEditDialog, setOpenEditDialog] = useState(false)
   const [openViewDialog, setOpenViewDialog] = useState(false)
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
@@ -89,8 +91,56 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
     material: [],
     flameAdhesive: [],
   })
+  // Add refs to track if we've already checked the URL for IDs
+  const hasCheckedEditUrlRef = useRef(false)
+  const hasCheckedDeleteUrlRef = useRef(false)
+  // Add refs to track if we're currently updating the URL
+  const isUpdatingUrlRef = useRef(false)
 
   const flameAdhesiveOptions = ["Flame", "Adhesive"]
+
+  // Check URL for edit ID and delete ID on component mount and when router query changes
+  useEffect(() => {
+    if (!router.isReady || isUpdatingUrlRef.current) return
+
+    const { editId, deleteId } = router.query
+
+    // Process editId if present
+    if (editId && data && data.length > 0 && !openEditDialog) {
+      // Find the item with the matching ID (handle both string and number comparisons)
+      const itemToEdit = data.find(
+        (item) =>
+          (item.id && item.id.toString() === editId.toString()) ||
+          (item._id && item._id.toString() === editId.toString()),
+      )
+
+      if (itemToEdit) {
+        handleOpenEditDialog(itemToEdit, false) // Pass false to prevent URL update
+        hasCheckedEditUrlRef.current = true
+      }
+    } else if (!editId) {
+      // Reset the flag when editId is removed from URL
+      hasCheckedEditUrlRef.current = false
+    }
+
+    // Process deleteId if present
+    if (deleteId && data && data.length > 0 && !openDeleteDialog) {
+      // Find the item with the matching ID (handle both string and number comparisons)
+      const itemToDelete = data.find(
+        (item) =>
+          (item.id && item.id.toString() === deleteId.toString()) ||
+          (item._id && item._id.toString() === deleteId.toString()),
+      )
+
+      if (itemToDelete) {
+        handleOpenDeleteDialog(itemToDelete, false) // Pass false to prevent URL update
+        hasCheckedDeleteUrlRef.current = true
+      }
+    } else if (!deleteId) {
+      // Reset the flag when deleteId is removed from URL
+      hasCheckedDeleteUrlRef.current = false
+    }
+  }, [router.query, data, openEditDialog, openDeleteDialog, router.isReady])
 
   // Update filtered data when data, search term, or filters change
   useEffect(() => {
@@ -138,26 +188,78 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
     },
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      onUpdate(selectedItem.id, values)
+      // Get the ID from the selected item (handle both id and _id)
+      const itemId = selectedItem.id || selectedItem._id
+
+      // Log what we're submitting for debugging
+      console.log("Submitting update for ID:", itemId, "with data:", values)
+
+      // Call the onUpdate function with both ID and updated data
+      onUpdate(itemId, values)
       handleCloseEditDialog()
     },
   })
 
-  const handleOpenEditDialog = (item) => {
+  const handleOpenEditDialog = (item, updateUrl = true) => {
     setSelectedItem(item)
+
+    // Update URL with the item ID only if updateUrl is true
+    if (updateUrl && router.isReady) {
+      const itemId = item.id || item._id
+
+      // Set flag to prevent re-processing this URL change
+      isUpdatingUrlRef.current = true
+
+      // Preserve existing query parameters
+      const newQuery = { ...router.query, editId: itemId }
+      // Remove deleteId if it exists to avoid confusion
+      delete newQuery.deleteId
+
+      // Update URL
+      router.push({ pathname: router.pathname, query: newQuery }, undefined, { shallow: true }).then(() => {
+        // Reset flag after URL update is complete
+        setTimeout(() => {
+          isUpdatingUrlRef.current = false
+        }, 100)
+      })
+    }
+
+    // Set form values
     formik.setValues({
       material: item.material || "",
       t1: item.t1 || "",
       materialDescription: item.materialDescription || "",
       flameAdhesive: item.flameAdhesive || "",
       colorway: item.colorway || "",
-      width: item.width || "",
+      width: item.width ? item.width.toString() : "", // Ensure width is a string
     })
+
+    // Open dialog immediately
     setOpenEditDialog(true)
   }
 
   const handleCloseEditDialog = () => {
+    // First, close the dialog immediately for better UX
     setOpenEditDialog(false)
+
+    // Then update the URL if router is ready
+    if (router.isReady) {
+      // Set flag to prevent re-processing this URL change
+      isUpdatingUrlRef.current = true
+
+      // Remove the editId from URL when closing while preserving other query params
+      const { editId, ...restQuery } = router.query
+
+      // Update URL
+      router.push({ pathname: router.pathname, query: restQuery }, undefined, { shallow: true }).then(() => {
+        // Reset flag after URL update is complete
+        setTimeout(() => {
+          isUpdatingUrlRef.current = false
+        }, 100)
+      })
+    }
+
+    // Reset the form
     formik.resetForm()
   }
 
@@ -167,21 +269,70 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
   }
 
   const handleCloseViewDialog = () => {
+    // Close dialog immediately
     setOpenViewDialog(false)
   }
 
-  const handleOpenDeleteDialog = (item) => {
+  const handleOpenDeleteDialog = (item, updateUrl = true) => {
     setSelectedItem(item)
+
+    // Update URL with the item ID only if updateUrl is true
+    if (updateUrl && router.isReady) {
+      const itemId = item.id || item._id
+
+      // Set flag to prevent re-processing this URL change
+      isUpdatingUrlRef.current = true
+
+      // Preserve existing query parameters
+      const newQuery = { ...router.query, deleteId: itemId }
+      // Remove editId if it exists to avoid confusion
+      delete newQuery.editId
+
+      // Update URL
+      router.push({ pathname: router.pathname, query: newQuery }, undefined, { shallow: true }).then(() => {
+        // Reset flag after URL update is complete
+        setTimeout(() => {
+          isUpdatingUrlRef.current = false
+        }, 100)
+      })
+    }
+
+    // Open dialog immediately
     setOpenDeleteDialog(true)
   }
 
   const handleCloseDeleteDialog = () => {
+    // First, close the dialog immediately for better UX
     setOpenDeleteDialog(false)
+
+    // Then update the URL if router is ready
+    if (router.isReady) {
+      // Set flag to prevent re-processing this URL change
+      isUpdatingUrlRef.current = true
+
+      // Remove the deleteId from URL when closing while preserving other query params
+      const { deleteId, ...restQuery } = router.query
+
+      // Update URL
+      router.push({ pathname: router.pathname, query: restQuery }, undefined, { shallow: true }).then(() => {
+        // Reset flag after URL update is complete
+        setTimeout(() => {
+          isUpdatingUrlRef.current = false
+        }, 100)
+      })
+    }
   }
 
   const handleConfirmDelete = () => {
-    onDelete(selectedItem.id)
-    handleCloseDeleteDialog()
+    // Get the ID from the selected item (handle both id and _id)
+    const itemId = selectedItem.id || selectedItem._id
+    console.log("Deleting item with ID:", itemId)
+
+    // Close dialog first for better UX
+    setOpenDeleteDialog(false)
+
+    // Then call delete function
+    onDelete(itemId)
   }
 
   const handleSearchChange = (event) => {
@@ -329,7 +480,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
           <TableBody>
             {filteredData.length > 0 ? (
               filteredData.map((row) => (
-                <StyledTableRow key={row.id} className="table-row">
+                <StyledTableRow key={row.id || row._id} className="table-row">
                   <TableCell>{row.material}</TableCell>
                   <TableCell>{row.t1}</TableCell>
                   <TableCell>{row.materialDescription}</TableCell>
@@ -389,11 +540,29 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
       </StyledTableContainer>
 
       {/* Edit Dialog */}
-      <Dialog open={openEditDialog} onClose={handleCloseEditDialog} maxWidth="md" fullWidth className="edit-dialog">
+      <Dialog
+        open={openEditDialog}
+        onClose={handleCloseEditDialog}
+        maxWidth="md"
+        fullWidth
+        className="edit-dialog"
+        disableEscapeKeyDown={false}
+      >
         <DialogTitle className="dialog-title">
           <Typography variant="h6" color="#2752e7">
-            Edit Production Record
+            Edit Production Record {selectedItem ? `#${selectedItem.id || selectedItem._id}` : ""}
           </Typography>
+          <IconButton
+            onClick={handleCloseEditDialog}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
         </DialogTitle>
 
         <Divider />
@@ -521,7 +690,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
                   id="width"
                   name="width"
                   label="Width"
-                  type="number"
+                  type="text"
                   value={formik.values.width}
                   onChange={formik.handleChange}
                   error={formik.touched.width && Boolean(formik.errors.width)}
@@ -551,10 +720,17 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
       </Dialog>
 
       {/* View Dialog */}
-      <Dialog open={openViewDialog} onClose={handleCloseViewDialog} maxWidth="md" fullWidth className="view-dialog">
+      <Dialog
+        open={openViewDialog}
+        onClose={handleCloseViewDialog}
+        maxWidth="md"
+        fullWidth
+        className="view-dialog"
+        disableEscapeKeyDown={false}
+      >
         <DialogTitle className="dialog-title">
           <Typography variant="h6" color="#2752e7">
-            Production Record Details
+            Production Record Details {selectedItem ? `#${selectedItem.id || selectedItem._id}` : ""}
           </Typography>
           <IconButton onClick={handleCloseViewDialog} className="close-button">
             <CloseIcon />
@@ -567,7 +743,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
           {selectedItem && (
             <Grid container spacing={3} className="detail-grid">
               <Grid item xs={12} md={6} className="detail-item">
-                <Typography variant="subtitle2" className="detail-label">
+                <Typography variant="subtitle2" color="primary" className="detail-label">
                   Material
                 </Typography>
                 <Typography variant="body1" className="detail-value highlight-value">
@@ -633,32 +809,86 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
             Close
           </Button>
           {isAdmin && (
-            <Button
-              onClick={() => {
-                handleCloseViewDialog()
-                handleOpenEditDialog(selectedItem)
-              }}
-              className="edit-button"
-              variant="contained"
-            >
-              Edit
-            </Button>
+            <>
+              <Button
+                onClick={() => {
+                  handleCloseViewDialog()
+                  handleOpenEditDialog(selectedItem)
+                }}
+                className="edit-button"
+                variant="contained"
+                color="primary"
+              >
+                Edit
+              </Button>
+              <Button
+                onClick={() => {
+                  handleCloseViewDialog()
+                  handleOpenDeleteDialog(selectedItem)
+                }}
+                className="delete-button"
+                variant="contained"
+                color="error"
+              >
+                Delete
+              </Button>
+            </>
           )}
         </DialogActions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog} className="delete-dialog">
+      <Dialog
+        open={openDeleteDialog}
+        onClose={handleCloseDeleteDialog}
+        className="delete-dialog"
+        disableEscapeKeyDown={false}
+      >
         <DialogTitle className="dialog-title">
           <Typography variant="h6" color="#2752e7">
             Confirm Delete
           </Typography>
+          <IconButton
+            onClick={handleCloseDeleteDialog}
+            sx={{
+              position: "absolute",
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
         </DialogTitle>
         <Divider />
         <DialogContent className="dialog-content">
           <Typography className="delete-message">
             Are you sure you want to delete this production record? This action cannot be undone.
           </Typography>
+          {/* {selectedItem && (
+            <Box mt={3} p={2} bgcolor="rgba(0, 0, 0, 0.04)" borderRadius={1}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    Material:
+                  </Typography>
+                  <Typography>{selectedItem.material}</Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    T1:
+                  </Typography>
+                  <Typography>{selectedItem.t1}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    Material Description:
+                  </Typography>
+                  <Typography>{selectedItem.materialDescription}</Typography>
+                </Grid>
+              </Grid>
+            </Box>
+          )} */}
         </DialogContent>
         <Divider />
         <DialogActions className="dialog-actions">
