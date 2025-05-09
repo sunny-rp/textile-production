@@ -28,6 +28,7 @@ import {
   Grid,
   Box,
   InputAdornment,
+  CircularProgress,
 } from "@mui/material"
 import {
   Edit as EditIcon,
@@ -49,6 +50,7 @@ const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   maxWidth: "100%",
   overflowX: "auto",
   maxHeight: "600px",
+  backgroundColor: "white",
   "& .MuiTableCell-head": {
     backgroundColor: "#f5f5f5",
     fontWeight: "bold",
@@ -57,6 +59,7 @@ const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   "& .MuiTable-root": {
     width: "100%",
     minWidth: "800px", // Ensures table doesn't get too compressed
+    backgroundColor: "white",
   },
 }))
 
@@ -78,26 +81,45 @@ const validationSchema = yup.object({
   width: yup.string().required("Width is required"),
 })
 
-const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
+const ProductionTable = ({ data, isAdmin, onUpdate, onDelete, onSearch, isSearching }) => {
   const router = useRouter()
   const [openEditDialog, setOpenEditDialog] = useState(false)
   const [openViewDialog, setOpenViewDialog] = useState(false)
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [filteredData, setFilteredData] = useState(data)
-  const [filterAnchorEl, setFilterAnchorEl] = useState(null)
-  const [selectedFilters, setSelectedFilters] = useState({
-    material: [],
-    flameAdhesive: [],
-  })
+  const [filteredData, setFilteredData] = useState([])
   // Add refs to track if we've already checked the URL for IDs
   const hasCheckedEditUrlRef = useRef(false)
   const hasCheckedDeleteUrlRef = useRef(false)
+  const hasCheckedSearchUrlRef = useRef(false)
   // Add refs to track if we're currently updating the URL
   const isUpdatingUrlRef = useRef(false)
+  // Add ref for search debounce
+  const searchTimeoutRef = useRef(null)
+  // Add ref to track the last search term
+  const lastSearchTermRef = useRef("")
 
   const flameAdhesiveOptions = ["Flame", "Adhesive"]
+
+  // Initialize search term from URL on component mount
+  useEffect(() => {
+    if (!router.isReady || isUpdatingUrlRef.current || hasCheckedSearchUrlRef.current) return
+
+    const { query } = router.query
+    if (query) {
+      setSearchTerm(query)
+      // Only trigger search if it hasn't been triggered yet for this term
+      if (lastSearchTermRef.current !== query) {
+        lastSearchTermRef.current = query
+        if (onSearch) {
+          console.log("Triggering search from URL with query:", query)
+          onSearch(query)
+        }
+      }
+      hasCheckedSearchUrlRef.current = true
+    }
+  }, [router.isReady, router.query, onSearch])
 
   // Check URL for edit ID and delete ID on component mount and when router query changes
   useEffect(() => {
@@ -142,40 +164,10 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
     }
   }, [router.query, data, openEditDialog, openDeleteDialog, router.isReady])
 
-  // Update filtered data when data, search term, or filters change
+  // Update filtered data when data changes
   useEffect(() => {
-    if (!Array.isArray(data)) {
-      console.warn("ProductionTable expected 'data' to be an array but got:", data)
-      setFilteredData([])
-      return
-    }
-
-    let result = [...data]
-
-    // search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase()
-      result = result.filter(
-        (item) =>
-          (item.material && item.material.toLowerCase().includes(searchLower)) ||
-          (item.t1 && item.t1.toLowerCase().includes(searchLower)) ||
-          (item.materialDescription && item.materialDescription.toLowerCase().includes(searchLower)) ||
-          (item.colorway && item.colorway.toLowerCase().includes(searchLower)) ||
-          (item.width && item.width.toString().includes(searchTerm)),
-      )
-    }
-
-    // filters
-    if (selectedFilters.material.length > 0) {
-      result = result.filter((item) => selectedFilters.material.includes(item.material))
-    }
-
-    if (selectedFilters.flameAdhesive.length > 0) {
-      result = result.filter((item) => selectedFilters.flameAdhesive.includes(item.flameAdhesive))
-    }
-
-    setFilteredData(result)
-  }, [data, searchTerm, selectedFilters])
+    setFilteredData(data || [])
+  }, [data])
 
   const formik = useFormik({
     initialValues: {
@@ -190,9 +182,6 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
     onSubmit: (values) => {
       // Get the ID from the selected item (handle both id and _id)
       const itemId = selectedItem.id || selectedItem._id
-
-      // Log what we're submitting for debugging
-      console.log("Submitting update for ID:", itemId, "with data:", values)
 
       // Call the onUpdate function with both ID and updated data
       onUpdate(itemId, values)
@@ -326,7 +315,6 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
   const handleConfirmDelete = () => {
     // Get the ID from the selected item (handle both id and _id)
     const itemId = selectedItem.id || selectedItem._id
-    console.log("Deleting item with ID:", itemId)
 
     // Close dialog first for better UX
     setOpenDeleteDialog(false)
@@ -335,45 +323,152 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
     onDelete(itemId)
   }
 
+  // Handle search input change - now only updates the UI with client-side filtering
   const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value)
+    const value = event.target.value
+    setSearchTerm(value)
+
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+
+    // If search term is empty, reset to full data
+    if (!value.trim()) {
+      if (onSearch) {
+        // Reset the search term reference
+        lastSearchTermRef.current = ""
+        onSearch("")
+      }
+
+      // Update URL to remove search query
+      if (router.isReady) {
+        isUpdatingUrlRef.current = true
+        const { query, ...restQuery } = router.query
+        router.push({ pathname: router.pathname, query: restQuery }, undefined, { shallow: true }).then(() => {
+          setTimeout(() => {
+            isUpdatingUrlRef.current = false
+          }, 100)
+        })
+      }
+      return
+    }
+
+    // If we have a server-side search function, use it with debounce (3 seconds)
+    if (onSearch) {
+      // Set a longer debounce to wait for user to finish typing
+      searchTimeoutRef.current = setTimeout(() => {
+        // Only trigger search if it's a new search term
+        if (lastSearchTermRef.current !== value) {
+          console.log("Executing search API with query:", value)
+          lastSearchTermRef.current = value
+
+          // Update URL with search query
+          if (router.isReady) {
+            isUpdatingUrlRef.current = true
+            const newQuery = { ...router.query, query: value }
+            router.push({ pathname: router.pathname, query: newQuery }, undefined, { shallow: true }).then(() => {
+              setTimeout(() => {
+                isUpdatingUrlRef.current = false
+                // Only trigger search after URL is updated and if it hasn't been triggered yet
+                onSearch(value)
+              }, 100)
+            })
+          } else {
+            // If router is not ready, just trigger search
+            onSearch(value)
+          }
+        }
+      }, 3000) // 3000ms (3 seconds) debounce - wait for user to finish typing
+    }
+  }
+
+  // Handle search key press - trigger API search on Enter
+  const handleSearchKeyPress = (event) => {
+    if (event.key === "Enter") {
+      // Clear any existing timeout
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+
+      // If search term is empty, reset to full data
+      if (!searchTerm.trim()) {
+        if (onSearch) {
+          // Reset the search term reference
+          lastSearchTermRef.current = ""
+          onSearch("")
+        }
+
+        // Update URL to remove search query
+        if (router.isReady) {
+          isUpdatingUrlRef.current = true
+          const { query, ...restQuery } = router.query
+          router.push({ pathname: router.pathname, query: restQuery }, undefined, { shallow: true }).then(() => {
+            setTimeout(() => {
+              isUpdatingUrlRef.current = false
+            }, 100)
+          })
+        }
+        return
+      }
+
+      // Skip if this is the same search term we just searched for
+      if (lastSearchTermRef.current === searchTerm && searchTerm !== "") {
+        console.log("Skipping duplicate search for:", searchTerm)
+        return
+      }
+
+      // Update the last search term
+      lastSearchTermRef.current = searchTerm
+
+      // If we have a server-side search function, use it
+      if (onSearch) {
+        console.log("Executing immediate search with query:", searchTerm)
+        // Update URL with search query
+        if (router.isReady) {
+          isUpdatingUrlRef.current = true
+          const newQuery = { ...router.query, query: searchTerm }
+          router.push({ pathname: router.pathname, query: newQuery }, undefined, { shallow: true }).then(() => {
+            setTimeout(() => {
+              isUpdatingUrlRef.current = false
+              // Only trigger search after URL is updated
+              onSearch(searchTerm)
+            }, 100)
+          })
+        } else {
+          // If router is not ready, just trigger search
+          onSearch(searchTerm)
+        }
+      }
+    }
   }
 
   const handleClearSearch = () => {
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+    }
+
     setSearchTerm("")
-  }
+    // Reset the search term reference
+    lastSearchTermRef.current = ""
 
-  const handleFilterClick = (event) => {
-    setFilterAnchorEl(event.currentTarget)
-  }
+    // Update URL to remove search query
+    if (router.isReady) {
+      isUpdatingUrlRef.current = true
 
-  const handleFilterClose = () => {
-    setFilterAnchorEl(null)
-  }
+      const { query, ...restQuery } = router.query
 
-  const handleFilterChange = (filterType, value) => {
-    setSelectedFilters((prev) => {
-      const currentValues = [...prev[filterType]]
-      const valueIndex = currentValues.indexOf(value)
+      router.push({ pathname: router.pathname, query: restQuery }, undefined, { shallow: true }).then(() => {
+        setTimeout(() => {
+          isUpdatingUrlRef.current = false
+        }, 100)
+      })
+    }
 
-      if (valueIndex === -1) {
-        currentValues.push(value)
-      } else {
-        currentValues.splice(valueIndex, 1)
-      }
-
-      return {
-        ...prev,
-        [filterType]: currentValues,
-      }
-    })
-  }
-
-  const handleClearFilters = () => {
-    setSelectedFilters({
-      material: [],
-      flameAdhesive: [],
-    })
+    if (onSearch) {
+      onSearch("")
+    }
   }
 
   const getFlameAdhesiveChipColor = (type) => {
@@ -387,7 +482,6 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
     }
   }
 
-  const isFiltersApplied = selectedFilters.material.length > 0 || selectedFilters.flameAdhesive.length > 0
   const handleExportToExcel = () => {
     if (filteredData.length === 0) {
       alert("No data to export.")
@@ -413,54 +507,61 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
 
     saveAs(data, `Production_Data_${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
+
   return (
     // Modified container to ensure full width
     <Box sx={{ width: "100%", maxWidth: "100%" }} className="production-table-container">
       <div className="table-toolbar">
-        {/* Improved search field */}
-        <TextField
-          placeholder="Search by material, description, colorway..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          variant="outlined"
-          size="small"
-          fullWidth
-          sx={{
-            "& .MuiInputBase-input": {
-              color: "#000", // user input text
-              "&::placeholder": {
-                color: "#888", // placeholder text
-                opacity: 1, // override MUI default opacity
+        {/* Search field */}
+        <Box sx={{ display: "flex", width: "100%", gap: 1 }}>
+          <TextField
+            placeholder="Search by material, description, colorway..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            onKeyPress={handleSearchKeyPress}
+            variant="outlined"
+            size="small"
+            fullWidth
+            sx={{
+              "& .MuiInputBase-input": {
+                color: "#000", // user input text
+                "&::placeholder": {
+                  color: "#888", // placeholder text
+                  opacity: 1, // override MUI default opacity
+                },
               },
-            },
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ color: "#888" }} />
-              </InputAdornment>
-            ),
-            endAdornment: searchTerm && (
-              <InputAdornment position="end">
-                <IconButton size="small" onClick={handleClearSearch}>
-                  <ClearIcon fontSize="small" />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-        />
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "#888" }} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  {isSearching ? (
+                    <CircularProgress size={20} />
+                  ) : searchTerm ? (
+                    <IconButton size="small" onClick={handleClearSearch}>
+                      <ClearIcon fontSize="small" />
+                    </IconButton>
+                  ) : null}
+                </InputAdornment>
+              ),
+            }}
+          />
 
-        <Button
-          variant="contained"
-          color="primary"
-          size="small"
-          onClick={handleExportToExcel}
-          style={{ marginLeft: "10px", height: "40px" }}
-        >
-          Export
-        </Button>
-        <Divider />
-        <Divider />
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleExportToExcel}
+            sx={{ minWidth: "100px" }}
+          >
+            Export
+          </Button>
+        </Box>
+        <Divider sx={{ my: 1 }} />
       </div>
 
       {/* Modified table container to ensure full width */}
@@ -478,9 +579,9 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredData.length > 0 ? (
+            {filteredData && filteredData.length > 0 ? (
               filteredData.map((row) => (
-                <StyledTableRow key={row.id || row._id} className="table-row">
+                <StyledTableRow key={row._id || row.id || Math.random().toString()} className="table-row">
                   <TableCell>{row.material}</TableCell>
                   <TableCell>{row.t1}</TableCell>
                   <TableCell>{row.materialDescription}</TableCell>
@@ -528,9 +629,9 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} align="center" className="no-data">
-                  {searchTerm || isFiltersApplied
-                    ? "No matching records found. Try adjusting your search or filters."
+                <TableCell colSpan={7} align="center" className="no-data" sx={{ backgroundColor: "white" }}>
+                  {searchTerm
+                    ? "No matching records found. Try adjusting your search."
                     : "No production data available"}
                 </TableCell>
               </TableRow>
@@ -550,7 +651,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
       >
         <DialogTitle className="dialog-title">
           <Typography variant="h6" color="#2752e7">
-            Edit Production Record {selectedItem ? `#${selectedItem.id || selectedItem._id}` : ""}
+            Edit Production Record
           </Typography>
           <IconButton
             onClick={handleCloseEditDialog}
@@ -730,7 +831,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
       >
         <DialogTitle className="dialog-title">
           <Typography variant="h6" color="#2752e7">
-            Production Record Details {selectedItem ? `#${selectedItem.id || selectedItem._id}` : ""}
+            Production Record Details
           </Typography>
           <IconButton onClick={handleCloseViewDialog} className="close-button">
             <CloseIcon />
@@ -856,7 +957,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
               top: 8,
               color: (theme) => theme.palette.grey[500],
             }}
-          >
+          >   
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -865,30 +966,6 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete }) => {
           <Typography className="delete-message">
             Are you sure you want to delete this production record? This action cannot be undone.
           </Typography>
-          {/* {selectedItem && (
-            <Box mt={3} p={2} bgcolor="rgba(0, 0, 0, 0.04)" borderRadius={1}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    Material:
-                  </Typography>
-                  <Typography>{selectedItem.material}</Typography>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    T1:
-                  </Typography>
-                  <Typography>{selectedItem.t1}</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    Material Description:
-                  </Typography>
-                  <Typography>{selectedItem.materialDescription}</Typography>
-                </Grid>
-              </Grid>
-            </Box>
-          )} */}
         </DialogContent>
         <Divider />
         <DialogActions className="dialog-actions">

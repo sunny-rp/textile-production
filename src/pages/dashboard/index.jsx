@@ -44,7 +44,7 @@ import ProductionTable from "../../components/ProductionTable"
 import { SecurePassword } from "../../components/PasswordStrengthIndicator"
 import { Toaster } from "react-hot-toast"
 import { registerUser } from "@/api/authApi"
-import { createClient, totalClient, editClient, deleteClient } from "@/api/clientApi"
+import { createClient, totalClient, editClient, deleteClient, searchClient } from "@/api/clientApi"
 import CloseIcon from "@mui/icons-material/Close"
 
 // List of admin emails for role-based access control
@@ -57,6 +57,7 @@ const Dashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false)
   const [productionData, setProductionData] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isSearching, setIsSearching] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false) // New state for tracking form submission
   const [showAddForm, setShowAddForm] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -66,10 +67,14 @@ const Dashboard = () => {
   const [showPassword1, setShowPassword1] = useState(false)
   const [isChecked, setIsChecked] = useState(false)
   const [signupLoading, setSignupLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   // Add a ref to track if data has been fetched and prevent infinite loops
   const dataFetchedRef = useRef(false)
   const initialLoadDoneRef = useRef(false)
+  const initialSearchDoneRef = useRef(false)
+  // Add ref to track the last search term
+  const lastSearchTermRef = useRef("")
 
   // Memoized fetch function to prevent unnecessary re-creation
   const fetchClientData = useCallback(async () => {
@@ -106,9 +111,91 @@ const Dashboard = () => {
     }
   }, [isLoading, isSubmitting])
 
+  // Check for search query in URL on initial load
+  useEffect(() => {
+    if (!router.isReady || initialSearchDoneRef.current) return
+
+    const { query } = router.query
+    if (query && !initialSearchDoneRef.current) {
+      setSearchQuery(query)
+      // Only perform the search if it's a new search term
+      if (lastSearchTermRef.current !== query) {
+        lastSearchTermRef.current = query
+        handleSearch(query)
+        initialSearchDoneRef.current = true
+      }
+    }
+  }, [router.isReady, router.query])
+
+  // Handle search functionality - now with improved logging
+  const handleSearch = async (query) => {
+    // Update the search query state
+    setSearchQuery(query)
+
+    // If query is empty, fetch all data
+    if (!query || query.trim() === "") {
+      console.log("Empty search query, fetching all data")
+      lastSearchTermRef.current = ""
+      dataFetchedRef.current = false
+      await fetchClientData()
+      return
+    }
+
+    // Skip if this is the same search term we just searched for
+    if (lastSearchTermRef.current === query && query !== "") {
+      console.log("Skipping duplicate search for:", query)
+      return
+    }
+
+    // Update the last search term
+    lastSearchTermRef.current = query
+
+    try {
+      setIsSearching(true)
+      console.log("Executing search API call with query:", query)
+
+      const response = await searchClient(query)
+      console.log("Search API response:", response)
+
+      // Check if the response has the expected structure
+      if (response?.data?.data) {
+        // Handle the case where the API returns an array directly
+        if (Array.isArray(response.data.data)) {
+          console.log("Search results (array):", response.data.data)
+          setProductionData(response.data.data)
+        }
+        // Handle the case where the API returns a clients property
+        else if (response.data.data.clients && Array.isArray(response.data.data.clients)) {
+          console.log("Search results (clients):", response.data.data.clients)
+          setProductionData(response.data.data.clients)
+        }
+        // Handle any other structure
+        else {
+          console.log("Unexpected search results structure:", response.data.data)
+          setProductionData([])
+        }
+      } else {
+        console.log("No search results found")
+        setProductionData([])
+      }
+    } catch (error) {
+      console.error("Search API error:", error)
+      if (error.response) {
+        console.error("Error response data:", error.response.data)
+        console.error("Error response status:", error.response.status)
+      }
+      toast.error("Search failed. Please try again.")
+      // Don't clear existing data on error
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
   // Add this effect to log productionData after it changes
   useEffect(() => {
     console.log("Production data state updated:", productionData)
+    console.log("Production data length:", productionData?.length || 0)
+    console.log("Production data is array:", Array.isArray(productionData))
   }, [productionData])
 
   // Initial setup effect - only runs once on mount
@@ -143,9 +230,17 @@ const Dashboard = () => {
     const isAdminUser = effectiveAccountType === "Admin"
     setIsAdmin(isAdminUser)
 
-    // Load initial data for ALL users
-    console.log("Fetching client data for user type:", effectiveAccountType)
-    fetchClientData()
+    // Check if there's a search query in the URL
+    const { query } = router.query
+    if (query) {
+      // If there's a search query, we'll handle it in the separate effect
+      setSearchQuery(query)
+      initialSearchDoneRef.current = false
+    } else {
+      // Otherwise, load initial data
+      console.log("Fetching client data for user type:", effectiveAccountType)
+      fetchClientData()
+    }
 
     // Mark initial load as done
     initialLoadDoneRef.current = true
@@ -359,7 +454,7 @@ const Dashboard = () => {
       console.log("Update response:", response)
 
       if (response && response.data && response.data.statusCode === 200) {
-        toast.success(response.data.message || "Production data updated successfully")
+        toast.success("Production data updated successfully")
 
         // Reset the data fetched flag to allow a refresh after updating
         dataFetchedRef.current = false
@@ -625,6 +720,7 @@ const Dashboard = () => {
                     p: 3,
                     borderRadius: "12px",
                     boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    backgroundColor: "white",
                   }}
                 >
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
@@ -655,26 +751,35 @@ const Dashboard = () => {
                   p: 3,
                   borderRadius: "12px",
                   boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  backgroundColor: "white", // Ensure white background
+                  overflow: "visible", // Ensure content doesn't get clipped
                 }}
               >
                 <Typography variant="h6" className="table-title" fontWeight={600} color="primary" sx={{ mb: 2 }}>
                   Production Records
+                  {searchQuery && (
+                    <Chip
+                      label={`Search: ${searchQuery}`}
+                      size="small"
+                      color="primary"
+                      sx={{ ml: 2 }}
+                      onDelete={() => handleSearch("")}
+                    />
+                  )}
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
-                {isLoading ? (
-                  <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+                {isLoading || isSearching ? (
+                  <Box sx={{ display: "flex", justifyContent: "center", p: 4, backgroundColor: "white" }}>
                     <CircularProgress size={40} />
-                  </Box>
-                ) : productionData.length === 0 ? (
-                  <Box sx={{ textAlign: "center", p: 4 }}>
-                    <Typography variant="body1">No production data available.</Typography>
                   </Box>
                 ) : (
                   <ProductionTable
-                    data={productionData}
+                    data={productionData || []}
                     isAdmin={isAdmin}
                     onUpdate={isAdmin ? handleUpdateProduction : undefined}
                     onDelete={isAdmin ? handleDeleteProduction : undefined}
+                    onSearch={handleSearch}
+                    isSearching={isSearching}
                   />
                 )}
               </Paper>
