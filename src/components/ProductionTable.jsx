@@ -964,7 +964,7 @@ const ProductionTable = ({ data, isAdmin, onUpdate, onDelete, onSearch, isSearch
         <Divider />
         <DialogContent className="dialog-content">
           <Typography className="delete-message">
-            Are you sure you want to delete this production record? This action cannot be undone.
+            Are you sure you want to delete this production record? This action cannot be undone. 
           </Typography>
         </DialogContent>
         <Divider />
